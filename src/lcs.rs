@@ -42,11 +42,6 @@ impl<'a> Lcs<'a> {
         self.table[source_length][target_length] as usize
     }
 
-    ///Checks if `Lcs.len()`` is equal to 0.
-    pub fn is_empty(&self) -> bool {
-        self.source.len() == 0 || self.target.len() == 0
-    }
-
     ///Returns the longest common subsequence in source and target
     pub fn subsequence(&self) -> Vec<u8> {
         let mut index = self.len();
@@ -105,7 +100,7 @@ mod lcs_tests {
     fn is_empty() {
         let source = vec![0; 255];
         let target = vec![];
-        assert!(Lcs::new(&source, &target).is_empty());
+        assert_eq!(Lcs::new(&source, &target).len(), 0);
     }
 
     #[test]

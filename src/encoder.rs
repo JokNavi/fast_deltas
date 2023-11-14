@@ -18,8 +18,7 @@ pub fn delta_encode<R: Read, W: Write>(source: R, target: R, patch: W) -> io::Re
             &source_buffer[..source_bytes_read],
             &target_buffer[..target_bytes_read],
         );
-        patch_writer.write(&instruction_bytes)?;
-
+        patch_writer.write_all(&instruction_bytes)?;
         source_bytes_read = source_reader.read(&mut source_buffer)?;
         target_bytes_read = target_reader.read(&mut target_buffer)?;
     }
@@ -28,7 +27,7 @@ pub fn delta_encode<R: Read, W: Write>(source: R, target: R, patch: W) -> io::Re
 }
 
 fn write_instructions_chunk(source: &[u8], target: &[u8]) -> Vec<u8> {
-    let lcs = Lcs::new(&source, &target).subsequence();
+    let lcs = Lcs::new(source, target).subsequence();
     let mut source_index: usize = 0;
     let mut target_index: usize = 0;
     let mut lcs_index: usize = 0;
@@ -74,7 +73,11 @@ fn write_instructions_chunk(source: &[u8], target: &[u8]) -> Vec<u8> {
 fn write_remove_instruction(source: &[u8], lcs: &[u8], instruction_buffer: &mut Vec<u8>) -> usize {
     instruction_buffer.push(REMOVE_INSTRUCTION_SIGN);
     let mut source_index: usize = 0;
-    while source_index < ChunkLength::MAX as usize && source_index < source.len() && ( lcs.is_empty() || lcs[0] != source[source_index]) {
+    let source_len = source.len();
+    while source_index < ChunkLength::MAX as usize
+        && source_index < source_len
+        && (lcs.is_empty() || lcs[0] != source[source_index])
+    {
         source_index += 1;
     }
     instruction_buffer.append(&mut ChunkLength::to_be_bytes(source_index as ChunkLength).to_vec());
@@ -84,7 +87,11 @@ fn write_remove_instruction(source: &[u8], lcs: &[u8], instruction_buffer: &mut 
 /// Returns the amount of target bytes used
 fn write_add_instruction(target: &[u8], lcs: &[u8], instruction_buffer: &mut Vec<u8>) -> usize {
     let mut target_index: usize = 0;
-    while target_index < ChunkLength::MAX as usize && target_index < target.len() && ( lcs.is_empty() || lcs[0] != target[target_index]) {
+    let target_len = target.len();
+    while target_index < ChunkLength::MAX as usize
+        && target_index < target_len
+        && (lcs.is_empty() || lcs[0] != target[target_index])
+    {
         instruction_buffer.push(target[target_index]);
         target_index += 1;
     }
@@ -105,20 +112,27 @@ fn write_copy_instruction(
     while ((lcs_index < lcs.len()
         && (lcs[lcs_index] == source[lcs_index] && lcs[lcs_index] == target[lcs_index]))
         || (calc_percent(buffer_zero_count, instruction_buffer.len()) <= ZERO_ITEM_COUNT_PERCENT))
-        && (source_index < source.len() && target_index < target.len())
+        && (target_index < target.len())
     {
-        instruction_buffer.push(target[target_index].wrapping_sub(source[source_index]));
-        source_index += 1;
-        target_index += 1;
-        lcs_index += 1;
-        if target[target_index] == source[source_index] {
+        let diff_item = if source_index < source.len() {
+            target[target_index].wrapping_sub(source[source_index])
+        } else {
+            target[target_index]
+        };
+        instruction_buffer.push(diff_item);
+        if diff_item == 0 {
             buffer_zero_count += 1;
         }
+        if source_index < source.len() {
+            source_index += 1;
+        }
+        target_index += 1;
+        lcs_index += 1;
     }
     lcs_index
 }
 
-fn buffer_zero_count(buffer: &mut Vec<u8>) -> usize {
+fn buffer_zero_count(buffer: &mut [u8]) -> usize {
     buffer.iter().filter(|item| **item == 0).count()
 }
 
@@ -152,16 +166,73 @@ mod encoder_tests {
         let target = vec![];
         let lcs = Lcs::new(&source, &target).subsequence();
         let mut instruction_buffer = vec![];
-        assert_eq!(write_remove_instruction(&source, &lcs, &mut instruction_buffer), 255);
-        assert_eq!(instruction_buffer[1..], ChunkLength::to_be_bytes(255).to_vec());
+        assert_eq!(
+            write_remove_instruction(&source, &lcs, &mut instruction_buffer),
+            255
+        );
+        assert_eq!(
+            instruction_buffer[1..],
+            ChunkLength::to_be_bytes(255).to_vec()
+        );
         assert_eq!(instruction_buffer[0], 45);
 
         let source = vec![0, 0, 0, 1, 1, 1];
         let target = vec![1, 1, 1];
         let lcs = Lcs::new(&source, &target).subsequence();
         let mut instruction_buffer = vec![];
-        assert_eq!(write_remove_instruction(&source, &lcs, &mut instruction_buffer), 3);
-        assert_eq!(instruction_buffer[1..], ChunkLength::to_be_bytes(3).to_vec());
+        assert_eq!(
+            write_remove_instruction(&source, &lcs, &mut instruction_buffer),
+            3
+        );
+        assert_eq!(
+            instruction_buffer[1..],
+            ChunkLength::to_be_bytes(3).to_vec()
+        );
+    }
 
+    #[test]
+    fn write_add_instruction_test() {
+        let source = vec![];
+        let target = vec![0; 255];
+        let lcs = Lcs::new(&source, &target).subsequence();
+        let mut instruction_buffer = vec![];
+        assert_eq!(
+            write_add_instruction(&target, &lcs, &mut instruction_buffer),
+            255
+        );
+        assert_eq!(instruction_buffer, vec![0; 255]);
+
+        let source = vec![0, 0, 0, 1, 1, 1];
+        let target = vec![2, 2, 2];
+        let lcs = Lcs::new(&source, &target).subsequence();
+        let mut instruction_buffer = vec![];
+        assert_eq!(
+            write_add_instruction(&target, &lcs, &mut instruction_buffer),
+            3
+        );
+        assert_eq!(instruction_buffer, target);
+    }
+
+    #[test]
+    fn write_copy_instruction_test() {
+        let source = vec![0; 255];
+        let target = vec![0; 255];
+        let lcs = Lcs::new(&source, &target).subsequence();
+        let mut instruction_buffer = vec![];
+        assert_eq!(
+            write_copy_instruction(&source, &target, &lcs, &mut instruction_buffer),
+            255
+        );
+        assert_eq!(instruction_buffer, vec![0; 255]);
+
+        let source = vec![1, 1, 1];
+        let target = vec![1, 1, 1, 2, 2, 2];
+        let lcs = Lcs::new(&source, &target).subsequence();
+        let mut instruction_buffer = vec![];
+        assert_eq!(
+            write_copy_instruction(&source, &target, &lcs, &mut instruction_buffer),
+            6
+        );
+        assert_eq!(instruction_buffer, vec![0, 0, 0, 2, 2, 2]);
     }
 }
