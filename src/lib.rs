@@ -1,7 +1,8 @@
 mod lcs;
 pub mod patch;
 pub type ChunkLength = u8;
-pub const ZERO_ITEM_COUNT_PERCENT: u8 = 0;
+pub const ZERO_ITEM_COUNT_PERCENT: usize = 50;
+pub const REMOVE_INSTRUCTION_SIGN: u8 = b'-';
 
 pub fn add(left: usize, right: usize) -> usize {
     left + right
