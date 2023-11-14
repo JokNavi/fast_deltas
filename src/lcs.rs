@@ -39,7 +39,7 @@ impl<'a> Lcs<'a> {
     pub fn len(&self) -> usize {
         let source_length = self.source.len();
         let target_length = self.target.len();
-        self.table[source_length][target_length].into()
+        self.table[source_length][target_length] as usize
     }
 
     ///Checks if `Lcs.len()`` is equal to 0.
@@ -80,7 +80,7 @@ mod lcs_tests {
 
     #[test]
     fn new_ok() {
-        let source = vec![0; ChunkLength::MAX.into()];
+        let source = vec![0; 255];
         let target = source.clone();
         let lcs = Lcs::new(&source, &target);
         assert_eq!(
@@ -96,28 +96,28 @@ mod lcs_tests {
     #[test]
     #[should_panic]
     fn new_panic() {
-        let source = vec![0; usize::from(ChunkLength::MAX) + 1];
-        let target = source.clone();
+        let source = vec![0; ChunkLength::MAX as usize + 1];
+        let target = vec![];
         Lcs::new(&source, &target);
     }
 
     #[test]
     fn is_empty() {
-        let source = vec![0; ChunkLength::MAX.into()];
+        let source = vec![0; 255];
         let target = vec![];
         assert!(Lcs::new(&source, &target).is_empty());
     }
 
     #[test]
     fn len() {
-        let source = vec![0; ChunkLength::MAX.into()];
+        let source = vec![0; 255];
         let target = source.clone();
         assert_eq!(Lcs::new(&source, &target).len(), 255);
     }
 
     #[test]
     fn subsequence() {
-        let source: Vec<u8> = (0..ChunkLength::MAX).collect();
+        let source: Vec<u8> = vec![0; 255];
         let target = source.clone();
         let lcs = Lcs::new(&source, &target);
         let subsequence = lcs.subsequence();
@@ -129,7 +129,7 @@ mod lcs_tests {
         assert_eq!(subsequence, b"MJAU");
         assert_eq!(subsequence.len(), lcs.len());
 
-        let source = vec![0; ChunkLength::MAX.into()];
+        let source = vec![0; 255];
         let target = vec![];
         let lcs = Lcs::new(&source, &target);
         let subsequence = lcs.subsequence();
