@@ -1,4 +1,6 @@
 mod lcs;
+pub mod patch;
+pub type ChunkLength = u8;
 
 pub fn add(left: usize, right: usize) -> usize {
     left + right

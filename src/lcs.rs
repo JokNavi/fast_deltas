@@ -1,4 +1,4 @@
-pub type ChunkLength = u8;
+use crate::ChunkLength;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Lcs<'a> {
