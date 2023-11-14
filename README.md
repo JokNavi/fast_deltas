@@ -16,3 +16,12 @@ A faster deltas library with a buffered read and write + smaller patches
     
     let v3_patch = vec![-, 3, 6, 0, 0, 0, 1, 1, 1, 3, 3, 3, 3, 3];
 ```
+
+```rust    
+    let source = vec![1, 1, 1, 2, 2, 2,];
+    let target = vec![1, 1, 1];
+    
+    let patch = vec![6, 0, 0, 0, 254, 254, 254];
+
+    let constructed_target = vec![1, 1, 1, 2, 2, 2];
+```

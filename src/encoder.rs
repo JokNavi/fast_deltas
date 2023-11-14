@@ -31,6 +31,7 @@ fn write_instructions_chunk(source: &[u8], target: &[u8]) -> Vec<u8> {
     let mut source_index: usize = 0;
     let mut target_index: usize = 0;
     let mut lcs_index: usize = 0;
+    let mut buffer_zero_count = 0;
 
     let mut instruction_buffer: Vec<u8> = Vec::with_capacity(ChunkLength::MAX as usize + 1);
     while lcs_index < lcs.len() {
@@ -45,15 +46,17 @@ fn write_instructions_chunk(source: &[u8], target: &[u8]) -> Vec<u8> {
                 write_add_instruction(&target[target_index..], &lcs, &mut instruction_buffer);
         } else {
             //Copy
-            let bytes_written = write_copy_instruction(
+            let (bytes_written, local_buffer_zero_count) = write_copy_instruction(
                 &source[source_index..],
                 &target[target_index..],
                 &lcs[lcs_index..],
                 &mut instruction_buffer,
+                buffer_zero_count,
             );
             source_index += bytes_written;
             target_index += bytes_written;
             lcs_index += bytes_written;
+            buffer_zero_count += local_buffer_zero_count;
         }
     }
     while source_index < source.len() {
@@ -92,9 +95,9 @@ fn write_add_instruction(target: &[u8], lcs: &[u8], instruction_buffer: &mut Vec
         && target_index < target_len
         && (lcs.is_empty() || lcs[0] != target[target_index])
     {
-        instruction_buffer.push(target[target_index]);
         target_index += 1;
     }
+    instruction_buffer.extend_from_slice(&target[0..target_index]);
     target_index
 }
 
@@ -104,61 +107,36 @@ fn write_copy_instruction(
     target: &[u8],
     lcs: &[u8],
     instruction_buffer: &mut Vec<u8>,
-) -> usize {
-    let mut lcs_index: usize = 0;
-    let mut source_index: usize = 0;
-    let mut target_index: usize = 0;
-    let mut buffer_zero_count = buffer_zero_count(instruction_buffer);
-    while ((lcs_index < lcs.len()
-        && (lcs[lcs_index] == source[lcs_index] && lcs[lcs_index] == target[lcs_index]))
-        || (calc_percent(buffer_zero_count, instruction_buffer.len()) <= ZERO_ITEM_COUNT_PERCENT))
-        && (target_index < target.len())
+    zero_count: usize,
+) -> (usize, usize) {
+    let mut zero_count: usize = zero_count;
+    let source_len = source.len();
+    let target_len = target.len();
+    let lcs_len = lcs.len();
+    let mut index: usize = 0;
+
+    while ((index < lcs_len && (lcs[index] == source[index] && lcs[index] == target[index]))
+        || (((zero_count * 100) / index) <= ZERO_ITEM_COUNT_PERCENT))
+        && (index < source_len && index < target_len)
     {
-        let diff_item = if source_index < source.len() {
-            target[target_index].wrapping_sub(source[source_index])
-        } else {
-            target[target_index]
-        };
-        instruction_buffer.push(diff_item);
-        if diff_item == 0 {
-            buffer_zero_count += 1;
+        if target[index] == source[index] {
+            zero_count += 1;
         }
-        if source_index < source.len() {
-            source_index += 1;
-        }
-        target_index += 1;
-        lcs_index += 1;
+        index += 1;
     }
-    lcs_index
-}
 
-fn buffer_zero_count(buffer: &mut [u8]) -> usize {
-    buffer.iter().filter(|item| **item == 0).count()
-}
-
-fn calc_percent(value: usize, buff_length: usize) -> usize {
-    ((value as f32 * 100.0) / buff_length as f32).round() as usize
+    instruction_buffer.extend(
+        (source[0..index])
+            .iter()
+            .zip(target)
+            .map(|(source_item, target_item)| target_item.wrapping_sub(*source_item)),
+    );
+    (index, zero_count)
 }
 
 #[cfg(test)]
 mod encoder_tests {
     use super::*;
-
-    #[test]
-    fn calc_percent_test() {
-        assert_eq!(calc_percent(1, 10), 10);
-        assert_eq!(calc_percent(10, 100), 10);
-        assert_eq!(calc_percent(100, 1000), 10);
-    }
-
-    #[test]
-    fn buffer_zero_count_test() {
-        let mut buffer = vec![0, 0, 0, 1, 1, 1];
-        assert_eq!(buffer_zero_count(&mut buffer), 3);
-
-        buffer.clear();
-        assert_eq!(buffer_zero_count(&mut buffer), 0);
-    }
 
     #[test]
     fn write_remove_instruction_test() {
@@ -215,23 +193,13 @@ mod encoder_tests {
 
     #[test]
     fn write_copy_instruction_test() {
-        let source = vec![0; 255];
-        let target = vec![0; 255];
-        let lcs = Lcs::new(&source, &target).subsequence();
-        let mut instruction_buffer = vec![];
-        assert_eq!(
-            write_copy_instruction(&source, &target, &lcs, &mut instruction_buffer),
-            255
-        );
-        assert_eq!(instruction_buffer, vec![0; 255]);
-
-        let source = vec![1, 1, 1];
+        let source = vec![1, 1, 1, 0, 0, 0];
         let target = vec![1, 1, 1, 2, 2, 2];
         let lcs = Lcs::new(&source, &target).subsequence();
         let mut instruction_buffer = vec![];
         assert_eq!(
-            write_copy_instruction(&source, &target, &lcs, &mut instruction_buffer),
-            6
+            write_copy_instruction(&source, &target, &lcs, &mut instruction_buffer, 0),
+            (6, 3)
         );
         assert_eq!(instruction_buffer, vec![0, 0, 0, 2, 2, 2]);
     }
