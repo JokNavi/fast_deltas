@@ -154,11 +154,14 @@ mod encoder_tests {
         let mut instruction_buffer = vec![];
         assert_eq!(write_remove_instruction(&source, &lcs, &mut instruction_buffer), 255);
         assert_eq!(instruction_buffer[1..], ChunkLength::to_be_bytes(255).to_vec());
+        assert_eq!(instruction_buffer[0], 45);
 
         let source = vec![0, 0, 0, 1, 1, 1];
-        let target = vec![];
+        let target = vec![1, 1, 1];
         let lcs = Lcs::new(&source, &target).subsequence();
         let mut instruction_buffer = vec![];
-        dbg!(write_remove_instruction(&source, &lcs, &mut instruction_buffer), instruction_buffer);
+        assert_eq!(write_remove_instruction(&source, &lcs, &mut instruction_buffer), 3);
+        assert_eq!(instruction_buffer[1..], ChunkLength::to_be_bytes(3).to_vec());
+
     }
 }
