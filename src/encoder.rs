@@ -102,28 +102,31 @@ fn write_copy_instruction(
     let mut source_index: usize = 0;
     let mut target_index: usize = 0;
     let mut buffer_zero_count = buffer_zero_count(instruction_buffer);
-    //((true && (true && true))
-    //|| (true))
-    //&& true
-    //&& (true)
-    while ((lcs_index < lcs.len() 
-    && (lcs[lcs_index] == source[lcs_index] && lcs[lcs_index] == target[lcs_index]))
-    || (calc_percent(buffer_zero_count, instruction_buffer.len()) <= ZERO_ITEM_COUNT_PERCENT))
-    && (source_index < source.len() && target_index < target.len()) 
+    while ((lcs_index < lcs.len()
+        && (lcs[lcs_index] == source[lcs_index] && lcs[lcs_index] == target[lcs_index]))
+        || (calc_percent(buffer_zero_count, instruction_buffer.len()) <= ZERO_ITEM_COUNT_PERCENT))
+        && (source_index < source.len() && target_index < target.len())
     {
         instruction_buffer.push(target[target_index].wrapping_sub(source[source_index]));
         source_index += 1;
         target_index += 1;
         lcs_index += 1;
+        if target[target_index] == source[source_index] {
+            buffer_zero_count += 1;
+        }
     }
     lcs_index
 }
 
-
 fn buffer_zero_count(buffer: &mut Vec<u8>) -> usize {
-    buffer.iter().filter(|item| **item == 0).count() 
+    buffer.iter().filter(|item| **item == 0).count()
 }
 
 fn calc_percent(value: usize, buff_length: usize) -> usize {
-    ((value / 100) *  buff_length) as usize
+    ((value / 100) * buff_length) as usize
+}
+
+#[cfg(test)]
+mod encoder_tests {
+    use super::*;
 }

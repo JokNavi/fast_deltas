@@ -1,5 +1,5 @@
 mod lcs;
-pub mod patch;
+pub mod encoder;
 pub type ChunkLength = u8;
 pub const ZERO_ITEM_COUNT_PERCENT: usize = 50;
 pub const REMOVE_INSTRUCTION_SIGN: u8 = b'-';
