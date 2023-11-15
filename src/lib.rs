@@ -1,6 +1,8 @@
 pub mod encoder;
 pub mod lcs;
 pub type ChunkLength = u8;
+pub const CHUNK_SIZE: ChunkLength = 255;
+pub const CHUNK_LENGTH_SIZE: usize = ChunkLength::BITS as usize / 8;
 pub const ZERO_ITEM_COUNT_PERCENT: usize = 100;
 pub const REMOVE_INSTRUCTION_SIGN: u8 = b'-';
 
