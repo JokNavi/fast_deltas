@@ -36,10 +36,10 @@ pub fn delta_encode<R: Read, W: Write>(source: R, target: R, patch: W) -> io::Re
 
 fn fill_instructions_buffer(source: &[u8], target: &[u8], instruction_buffer: &mut Vec<u8>) {
     let lcs = Lcs::new(source, target).subsequence();
+    let mut buffer_zero_count = 0;
     let mut source_index: usize = 0;
     let mut target_index: usize = 0;
     let mut lcs_index: usize = 0;
-    let mut buffer_zero_count = 0;
     let mut buffer_index = 0;
 
     while lcs_index < lcs.len() {
@@ -57,26 +57,34 @@ fn fill_instructions_buffer(source: &[u8], target: &[u8], instruction_buffer: &m
             buffer_index += bytes_written;
         } else if target_index < target.len() && lcs[lcs_index] != target[target_index] {
             //Add
-            let add_instruction_length = add_instruction_length(&target[target_index..], &lcs);
-            instruction_buffer
-                .extend_from_slice(&target[target_index..target_index + add_instruction_length]);
+            let instruction_length = add_instruction_length(&target[target_index..], &lcs);
+            let bytes_written = write_remove_instruction(
+                instruction_length,
+                &target[target_index..],
+                &lcs,
+                &mut instruction_buffer[buffer_index..],
+            );
+            target_index += instruction_length;
+            buffer_index += bytes_written;
         } else {
             //Copy
-            let copy_instruction_length = copy_instruction_length(
+            let instruction_length = copy_instruction_length(
                 &source[source_index..],
                 &target[target_index..],
-                &lcs[lcs_index..],
+                &lcs,
                 &mut buffer_zero_count,
             );
-            instruction_buffer.extend(
-                (source[source_index..source_index + copy_instruction_length])
-                    .iter()
-                    .zip(target)
-                    .map(|(source_item, target_item)| target_item.wrapping_sub(*source_item)),
+            let bytes_written = write_copy_instruction(
+                instruction_length,
+                &source[source_index..],
+                &target[target_index..],
+                &lcs,
+                &mut instruction_buffer[buffer_index..],
             );
-            source_index += copy_instruction_length;
-            target_index += copy_instruction_length;
-            lcs_index += copy_instruction_length;
+            buffer_index += bytes_written;
+            source_index += instruction_length;
+            target_index += instruction_length;
+            lcs_index += instruction_length;
         }
     }
     while source_index < source.len() {
@@ -93,9 +101,15 @@ fn fill_instructions_buffer(source: &[u8], target: &[u8], instruction_buffer: &m
     }
     while target_index < target.len() {
         //Add
-        let add_instruction_length = add_instruction_length(&target[target_index..], &lcs);
-        instruction_buffer
-            .extend_from_slice(&target[target_index..target_index + add_instruction_length]);
+        let instruction_length = add_instruction_length(&target[target_index..], &lcs);
+        let bytes_written = write_remove_instruction(
+            instruction_length,
+            &target[target_index..],
+            &lcs,
+            &mut instruction_buffer[buffer_index..],
+        );
+        target_index += instruction_length;
+        buffer_index += bytes_written;
     }
 }
 
@@ -123,7 +137,7 @@ fn write_add_instruction(
     write_buffer: &mut [u8],
 ) -> usize {
     for (i, byte) in target[..instruction_length].iter().enumerate() {
-        write_buffer[i] = * byte;
+        write_buffer[i] = *byte;
     }
     instruction_length
 }
@@ -135,7 +149,9 @@ fn write_copy_instruction(
     lcs: &[u8],
     write_buffer: &mut [u8],
 ) -> usize {
-    for (i, (source_byte, target_byte)) in source[..instruction_length].iter().zip(target).enumerate() {
+    for (i, (source_byte, target_byte)) in
+        source[..instruction_length].iter().zip(target).enumerate()
+    {
         write_buffer[i] = target_byte.wrapping_sub(*source_byte);
     }
     instruction_length
