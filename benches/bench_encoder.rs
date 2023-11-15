@@ -55,7 +55,7 @@ fn write_copy_instruction(
         if target[index] == source[index] {
             zero_count += 1;
         }
-        index += 1;       
+        index += 1;
     }
 
     instruction_buffer.extend(
@@ -82,8 +82,8 @@ mod tests {
             let mut instruction_buffer = vec![];
             black_box(write_add_instruction(
                 black_box(&source),
-                    black_box(&lcs),
-                    black_box(&mut instruction_buffer),
+                black_box(&lcs),
+                black_box(&mut instruction_buffer),
             ));
         });
     }
