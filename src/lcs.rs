@@ -1,20 +1,21 @@
-use crate::ChunkLength;
+use crate::CHUNK_SIZE;
+
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Lcs<'a> {
     source: &'a [u8],
     target: &'a [u8],
-    table: Vec<Vec<ChunkLength>>,
+    table: Vec<Vec<u8>>,
 }
 
 impl<'a> Lcs<'a> {
-    ///Max length for Source and target is `ChunkLength::MAX`!
+    ///Max length for Source and target is `u8::MAX`!
     pub fn new(source: &'a [u8], target: &'a [u8]) -> Self {
         let source_length = source.len();
         let target_length = target.len();
-        assert!(source_length <= ChunkLength::MAX as usize);
-        assert!(target_length <= ChunkLength::MAX as usize);
-        let mut table: Vec<Vec<ChunkLength>> = vec![vec![0; target_length + 1]; source_length + 1];
+        debug_assert!(source_length <= CHUNK_SIZE as usize);
+        debug_assert!(target_length <= CHUNK_SIZE as usize);
+        let mut table: Vec<Vec<u8>> = vec![vec![0; target_length + 1]; source_length + 1];
 
         for x in 0..=source_length {
             for y in 0..=target_length {
@@ -95,7 +96,7 @@ mod lcs_tests {
     #[test]
     #[should_panic]
     fn new_panic() {
-        let source = vec![0; ChunkLength::MAX as usize + 1];
+        let source = vec![0; u8::MAX as usize + 1];
         let target = vec![];
         Lcs::new(&source, &target);
     }

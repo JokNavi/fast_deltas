@@ -1,12 +1,13 @@
-use std::{
-    io::{self, BufReader, BufWriter, Read, Write},
-    slice::Iter,
-};
+use std::io::{self, BufReader, BufWriter, Read, Write};
+use crate::{lcs::Lcs, CHUNK_SIZE, ZERO_ITEM_COUNT_PERCENT};
 
-use crate::{
-    lcs::Lcs, ChunkLength, BUFFER_SIZE, CHUNK_SIZE, REMOVE_INSTRUCTION_SIGN,
-    ZERO_ITEM_COUNT_PERCENT,
-};
+/// ### Special: Check next byte.
+/// If the next byte IS a 0 it is a copy instruction.
+/// If the next byte IS NOT a 0 it is a remove instruction.
+/// If the that should have been INSTRUCTION_BYTE is not equal to 0 it is an add instruction.
+pub const INSTRUCTION_BYTE: u8 = 0;
+
+const BUFFER_SIZE: usize = CHUNK_SIZE as usize + 1;
 
 pub fn delta_encode<R: Read, W: Write>(source: R, target: R, patch: W) -> io::Result<()> {
     let mut source_reader = BufReader::new(source);
@@ -45,8 +46,8 @@ fn fill_instructions_buffer(source: &[u8], target: &[u8]) -> Vec<u8> {
         if source_index < source.len() && lcs[lcs_index] != source[source_index] {
             //Remove
             let instruction_length = remove_instruction_length(&source[source_index..], &lcs);
-            instruction_buffer.push(REMOVE_INSTRUCTION_SIGN);
-            instruction_buffer.extend(ChunkLength::to_be_bytes(source_index as ChunkLength));
+            instruction_buffer.push(INSTRUCTION_BYTE);
+            instruction_buffer.push(instruction_length as u8);
             source_index += instruction_length;
         } else if target_index < target.len() && lcs[lcs_index] != target[target_index] {
             //Add
@@ -76,8 +77,8 @@ fn fill_instructions_buffer(source: &[u8], target: &[u8]) -> Vec<u8> {
     while source_index < source.len() {
         //Remove
         let instruction_length = remove_instruction_length(&source[source_index..], &lcs);
-        instruction_buffer.push(REMOVE_INSTRUCTION_SIGN);
-        instruction_buffer.extend(ChunkLength::to_be_bytes(source_index as ChunkLength));
+        instruction_buffer.push(INSTRUCTION_BYTE);
+        instruction_buffer.push(instruction_length as u8);
         source_index += instruction_length;
     }
     while target_index < target.len() {
@@ -134,7 +135,7 @@ mod encoder_tests {
     use super::*;
 
     #[test]
-    fn write_remove_instruction_test() {
+    fn remove_instruction_length_test() {
         let source = vec![0; 255];
         let target = vec![];
         let lcs = Lcs::new(&source, &target).subsequence();
@@ -147,7 +148,7 @@ mod encoder_tests {
     }
 
     #[test]
-    fn write_add_instruction_test() {
+    fn add_instruction_length_test() {
         let source = vec![];
         let target = vec![0; 255];
         let lcs = Lcs::new(&source, &target).subsequence();
@@ -160,7 +161,7 @@ mod encoder_tests {
     }
 
     #[test]
-    fn write_copy_instruction_test() {
+    fn copy_instruction_length_test() {
         let source = vec![1, 1, 1, 0, 0, 0];
         let target = vec![1, 1, 1, 2, 2, 2];
         let lcs = Lcs::new(&source, &target).subsequence();
@@ -170,5 +171,13 @@ mod encoder_tests {
             6
         );
         assert_eq!(zero_count, 3);
+    }
+
+    #[test]
+    fn fill_instructions_buffer_test() {
+        let source = vec![0, 0, 0, 1, 1, 1, 0, 0, 0];
+        let target = vec![1, 1, 1, 2, 2, 2];
+
+        dbg!(fill_instructions_buffer(&source, &target));
     }
 }
