@@ -1,28 +1,26 @@
+use crate::{lcs::Lcs, CHUNK_SIZE, ZERO_ITEM_COUNT_PERCENT, AVERAGE_INSTRUCTION_AMOUNT, INSTRUCTION_BYTE};
 use std::io::{self, BufReader, BufWriter, Read, Write};
-use crate::{lcs::Lcs, CHUNK_SIZE, ZERO_ITEM_COUNT_PERCENT};
 
-/// ### Special: Check next byte.
-/// If the next byte IS a 0 it is a copy instruction.
-/// If the next byte IS NOT a 0 it is a remove instruction.
-/// If the that should have been INSTRUCTION_BYTE is not equal to 0 it is an add instruction.
-pub const INSTRUCTION_BYTE: u8 = 0;
+///The actual chunk size used. A few bytes are subtracted to make place for the instruction identifiers.
+const REAL_CHUNK_SIZE: u8 = CHUNK_SIZE - (AVERAGE_INSTRUCTION_AMOUNT * 2);
 
-const BUFFER_SIZE: usize = CHUNK_SIZE as usize + 1;
+/// The size of one instruction buffer.
+const BUFFER_SIZE: usize = CHUNK_SIZE as usize;
+
 
 pub fn delta_encode<R: Read, W: Write>(source: R, target: R, patch: W) -> io::Result<()> {
     let mut source_reader = BufReader::new(source);
     let mut target_reader = BufReader::new(target);
     let mut patch_writer = BufWriter::new(patch);
 
-    let mut source_buffer = [0u8; CHUNK_SIZE as usize];
-    let mut target_buffer = [0u8; CHUNK_SIZE as usize];
-    let mut instruction_buffer: Vec<u8>;
+    let mut source_buffer = [0u8; REAL_CHUNK_SIZE as usize];
+    let mut target_buffer = [0u8; REAL_CHUNK_SIZE as usize];
 
     let mut source_bytes_read = source_reader.read(&mut source_buffer)?;
     let mut target_bytes_read = target_reader.read(&mut target_buffer)?;
 
     while source_bytes_read > 0 || target_bytes_read > 0 {
-        instruction_buffer = fill_instructions_buffer(
+        let instruction_buffer = fill_instructions_buffer(
             &source_buffer[..source_bytes_read],
             &target_buffer[..target_bytes_read],
         );
@@ -35,7 +33,6 @@ pub fn delta_encode<R: Read, W: Write>(source: R, target: R, patch: W) -> io::Re
 
 fn fill_instructions_buffer(source: &[u8], target: &[u8]) -> Vec<u8> {
     let lcs = Lcs::new(source, target).subsequence();
-    let mut buffer_zero_count = 0;
     let mut source_index: usize = 0;
     let mut target_index: usize = 0;
     let mut lcs_index: usize = 0;
@@ -52,6 +49,7 @@ fn fill_instructions_buffer(source: &[u8], target: &[u8]) -> Vec<u8> {
         } else if target_index < target.len() && lcs[lcs_index] != target[target_index] {
             //Add
             let instruction_length = add_instruction_length(&target[target_index..], &lcs);
+            instruction_buffer.push(instruction_length as u8);
             instruction_buffer
                 .extend_from_slice(&target[target_index..target_index + instruction_length]);
             target_index += instruction_length;
@@ -61,8 +59,8 @@ fn fill_instructions_buffer(source: &[u8], target: &[u8]) -> Vec<u8> {
                 &source[source_index..],
                 &target[target_index..],
                 &lcs,
-                &mut buffer_zero_count,
             );
+            instruction_buffer.push(INSTRUCTION_BYTE);
             instruction_buffer.extend(
                 (source[source_index..source_index + instruction_length])
                     .iter()
@@ -84,6 +82,7 @@ fn fill_instructions_buffer(source: &[u8], target: &[u8]) -> Vec<u8> {
     while target_index < target.len() {
         //Add
         let instruction_length = add_instruction_length(&target[target_index..], &lcs);
+        instruction_buffer.push(instruction_length as u8);
         instruction_buffer
             .extend_from_slice(&target[target_index..target_index + instruction_length]);
         target_index += instruction_length;
@@ -111,19 +110,19 @@ fn copy_instruction_length(
     source: &[u8],
     target: &[u8],
     lcs: &[u8],
-    zero_count: &mut usize,
 ) -> usize {
     let source_len = source.len();
     let target_len = target.len();
     let lcs_len = lcs.len();
     let mut index: usize = 0;
+    let mut zero_count = 0;
 
     while ((index < lcs_len && (lcs[index] == source[index] && lcs[index] == target[index]))
-        || (((*zero_count * 100) / index) <= ZERO_ITEM_COUNT_PERCENT))
+        || (((zero_count * 100) / index) <= ZERO_ITEM_COUNT_PERCENT))
         && (index < source_len && index < target_len)
     {
         if target[index] == source[index] {
-            *zero_count += 1;
+            zero_count += 1;
         }
         index += 1;
     }
@@ -167,7 +166,7 @@ mod encoder_tests {
         let lcs = Lcs::new(&source, &target).subsequence();
         let mut zero_count = 0;
         assert_eq!(
-            copy_instruction_length(&source, &target, &lcs, &mut zero_count),
+            copy_instruction_length(&source, &target, &lcs),
             6
         );
         assert_eq!(zero_count, 3);
