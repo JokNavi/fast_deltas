@@ -4,7 +4,7 @@ use std::{
 };
 
 use crate::{
-    lcs::Lcs, ChunkLength, CHUNK_LENGTH_SIZE, CHUNK_SIZE, REMOVE_INSTRUCTION_SIGN,
+    lcs::Lcs, ChunkLength, BUFFER_SIZE, CHUNK_SIZE, REMOVE_INSTRUCTION_SIGN,
     ZERO_ITEM_COUNT_PERCENT,
 };
 
@@ -15,57 +15,45 @@ pub fn delta_encode<R: Read, W: Write>(source: R, target: R, patch: W) -> io::Re
 
     let mut source_buffer = [0u8; CHUNK_SIZE as usize];
     let mut target_buffer = [0u8; CHUNK_SIZE as usize];
-    let mut instruction_buffer = [0u8; CHUNK_SIZE as usize + 1];
+    let mut instruction_buffer: Vec<u8>;
 
     let mut source_bytes_read = source_reader.read(&mut source_buffer)?;
     let mut target_bytes_read = target_reader.read(&mut target_buffer)?;
 
     while source_bytes_read > 0 || target_bytes_read > 0 {
-        let instruction_bytes = fill_instructions_buffer(
+        instruction_buffer = fill_instructions_buffer(
             &source_buffer[..source_bytes_read],
             &target_buffer[..target_bytes_read],
-            &mut instruction_buffer,
         );
-        patch_writer.write_all(&instruction_bytes)?;
+        patch_writer.write_all(&instruction_buffer)?;
         source_bytes_read = source_reader.read(&mut source_buffer)?;
         target_bytes_read = target_reader.read(&mut target_buffer)?;
     }
-
     Ok(())
 }
 
-fn fill_instructions_buffer(source: &[u8], target: &[u8], instruction_buffer: &mut Vec<u8>) {
+fn fill_instructions_buffer(source: &[u8], target: &[u8]) -> Vec<u8> {
     let lcs = Lcs::new(source, target).subsequence();
     let mut buffer_zero_count = 0;
     let mut source_index: usize = 0;
     let mut target_index: usize = 0;
     let mut lcs_index: usize = 0;
-    let mut buffer_index = 0;
 
+    let mut instruction_buffer = Vec::with_capacity(BUFFER_SIZE);
     while lcs_index < lcs.len() {
         debug_assert!(lcs_index <= source_index && lcs_index <= target_index);
         if source_index < source.len() && lcs[lcs_index] != source[source_index] {
             //Remove
             let instruction_length = remove_instruction_length(&source[source_index..], &lcs);
-            let bytes_written = write_remove_instruction(
-                instruction_length,
-                &source[source_index..],
-                &lcs,
-                &mut instruction_buffer[buffer_index..],
-            );
+            instruction_buffer.push(REMOVE_INSTRUCTION_SIGN);
+            instruction_buffer.extend(ChunkLength::to_be_bytes(source_index as ChunkLength));
             source_index += instruction_length;
-            buffer_index += bytes_written;
         } else if target_index < target.len() && lcs[lcs_index] != target[target_index] {
             //Add
             let instruction_length = add_instruction_length(&target[target_index..], &lcs);
-            let bytes_written = write_remove_instruction(
-                instruction_length,
-                &target[target_index..],
-                &lcs,
-                &mut instruction_buffer[buffer_index..],
-            );
+            instruction_buffer
+                .extend_from_slice(&target[target_index..target_index + instruction_length]);
             target_index += instruction_length;
-            buffer_index += bytes_written;
         } else {
             //Copy
             let instruction_length = copy_instruction_length(
@@ -74,14 +62,12 @@ fn fill_instructions_buffer(source: &[u8], target: &[u8], instruction_buffer: &m
                 &lcs,
                 &mut buffer_zero_count,
             );
-            let bytes_written = write_copy_instruction(
-                instruction_length,
-                &source[source_index..],
-                &target[target_index..],
-                &lcs,
-                &mut instruction_buffer[buffer_index..],
+            instruction_buffer.extend(
+                (source[source_index..source_index + instruction_length])
+                    .iter()
+                    .zip(&target[target_index..target_index + instruction_length])
+                    .map(|(source_item, target_item)| target_item.wrapping_sub(*source_item)),
             );
-            buffer_index += bytes_written;
             source_index += instruction_length;
             target_index += instruction_length;
             lcs_index += instruction_length;
@@ -90,71 +76,18 @@ fn fill_instructions_buffer(source: &[u8], target: &[u8], instruction_buffer: &m
     while source_index < source.len() {
         //Remove
         let instruction_length = remove_instruction_length(&source[source_index..], &lcs);
-        let bytes_written = write_remove_instruction(
-            instruction_length,
-            &source[source_index..],
-            &lcs,
-            &mut instruction_buffer[buffer_index..],
-        );
+        instruction_buffer.push(REMOVE_INSTRUCTION_SIGN);
+        instruction_buffer.extend(ChunkLength::to_be_bytes(source_index as ChunkLength));
         source_index += instruction_length;
-        buffer_index += bytes_written;
     }
     while target_index < target.len() {
         //Add
         let instruction_length = add_instruction_length(&target[target_index..], &lcs);
-        let bytes_written = write_remove_instruction(
-            instruction_length,
-            &target[target_index..],
-            &lcs,
-            &mut instruction_buffer[buffer_index..],
-        );
+        instruction_buffer
+            .extend_from_slice(&target[target_index..target_index + instruction_length]);
         target_index += instruction_length;
-        buffer_index += bytes_written;
     }
-}
-
-//returns the amount of bytes written
-fn write_remove_instruction(
-    instruction_length: usize,
-    source: &[u8],
-    lcs: &[u8],
-    write_buffer: &mut [u8],
-) -> usize {
-    write_buffer[0] = REMOVE_INSTRUCTION_SIGN;
-    for (i, byte) in ChunkLength::to_be_bytes(instruction_length as ChunkLength)
-        .iter()
-        .enumerate()
-    {
-        write_buffer[i] = *byte;
-    }
-    CHUNK_LENGTH_SIZE + 1
-}
-
-fn write_add_instruction(
-    instruction_length: usize,
-    target: &[u8],
-    lcs: &[u8],
-    write_buffer: &mut [u8],
-) -> usize {
-    for (i, byte) in target[..instruction_length].iter().enumerate() {
-        write_buffer[i] = *byte;
-    }
-    instruction_length
-}
-
-fn write_copy_instruction(
-    instruction_length: usize,
-    source: &[u8],
-    target: &[u8],
-    lcs: &[u8],
-    write_buffer: &mut [u8],
-) -> usize {
-    for (i, (source_byte, target_byte)) in
-        source[..instruction_length].iter().zip(target).enumerate()
-    {
-        write_buffer[i] = target_byte.wrapping_sub(*source_byte);
-    }
-    instruction_length
+    instruction_buffer
 }
 
 ///Returns the amount of bytes the next Remove instruction will take
