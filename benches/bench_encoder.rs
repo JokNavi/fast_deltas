@@ -4,14 +4,6 @@ use fast_deltas::{ChunkLength, REMOVE_INSTRUCTION_SIGN, ZERO_ITEM_COUNT_PERCENT}
 
 extern crate test;
 
-fn buffer_zero_count(buffer: &mut [u8]) -> usize {
-    buffer.iter().filter(|item| item == &&0).count()
-}
-
-fn calc_percent(value: usize, buff_length: usize) -> usize {
-    ((value as f32 * 100.0) / buff_length as f32).round() as usize
-}
-
 ///Returns the amount of source bytes used
 fn write_remove_instruction(source: &[u8], lcs: &[u8], instruction_buffer: &mut Vec<u8>) -> usize {
     instruction_buffer.push(REMOVE_INSTRUCTION_SIGN);
@@ -23,7 +15,7 @@ fn write_remove_instruction(source: &[u8], lcs: &[u8], instruction_buffer: &mut 
     {
         source_index += 1;
     }
-    instruction_buffer.append(&mut ChunkLength::to_be_bytes(source_index as ChunkLength).to_vec());
+    instruction_buffer.extend(ChunkLength::to_be_bytes(source_index as ChunkLength));
     source_index
 }
 
@@ -56,7 +48,6 @@ fn write_copy_instruction(
     let lcs_len = lcs.len();
     let mut index: usize = 0;
 
-
     while ((index < lcs_len && (lcs[index] == source[index] && lcs[index] == target[index]))
         || (((zero_count * 100) / index) <= ZERO_ITEM_COUNT_PERCENT))
         && (index < source_len && index < target_len)
@@ -64,7 +55,7 @@ fn write_copy_instruction(
         if target[index] == source[index] {
             zero_count += 1;
         }
-        index += 1;
+        index += 1;       
     }
 
     instruction_buffer.extend(
@@ -79,7 +70,7 @@ fn write_copy_instruction(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use fast_deltas::{lcs::Lcs, ChunkLength};
+    use fast_deltas::lcs::Lcs;
     use test::{black_box, Bencher};
 
     #[bench]
@@ -90,9 +81,9 @@ mod tests {
         b.iter(|| {
             let mut instruction_buffer = vec![];
             black_box(write_add_instruction(
-                &source,
-                &lcs,
-                &mut instruction_buffer,
+                black_box(&source),
+                    black_box(&lcs),
+                    black_box(&mut instruction_buffer),
             ));
         });
     }
@@ -105,9 +96,9 @@ mod tests {
         b.iter(|| {
             let mut instruction_buffer = vec![];
             black_box(write_remove_instruction(
-                &target,
-                &lcs,
-                &mut instruction_buffer,
+                black_box(&target),
+                black_box(&lcs),
+                black_box(&mut instruction_buffer),
             ));
         });
     }
@@ -120,11 +111,11 @@ mod tests {
         b.iter(|| {
             let mut instruction_buffer = vec![];
             black_box(write_copy_instruction(
-                &source,
-                &target,
-                &lcs,
-                &mut instruction_buffer,
-                0,
+                black_box(&source),
+                black_box(&target),
+                black_box(&lcs),
+                black_box(&mut instruction_buffer),
+                black_box(0),
             ));
         });
     }

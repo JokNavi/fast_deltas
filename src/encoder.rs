@@ -83,7 +83,7 @@ fn write_remove_instruction(source: &[u8], lcs: &[u8], instruction_buffer: &mut 
     {
         source_index += 1;
     }
-    instruction_buffer.append(&mut ChunkLength::to_be_bytes(source_index as ChunkLength).to_vec());
+    instruction_buffer.extend(ChunkLength::to_be_bytes(source_index as ChunkLength));
     source_index
 }
 
@@ -122,7 +122,7 @@ fn write_copy_instruction(
         if target[index] == source[index] {
             zero_count += 1;
         }
-        index += 1;
+        index += 1;       
     }
 
     instruction_buffer.extend(
@@ -201,6 +201,7 @@ mod encoder_tests {
             write_copy_instruction(&source, &target, &lcs, &mut instruction_buffer, 0),
             (6, 3)
         );
+        dbg!(&instruction_buffer);
         assert_eq!(instruction_buffer, vec![0, 0, 0, 2, 2, 2]);
     }
 }
