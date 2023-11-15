@@ -42,6 +42,10 @@ impl<'a> Lcs<'a> {
         self.table[source_length][target_length] as usize
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     ///Returns the longest common subsequence in source and target
     pub fn subsequence(&self) -> Vec<u8> {
         let mut index = self.len();
