@@ -1,12 +1,13 @@
-use crate::{lcs::Lcs, CHUNK_SIZE, ZERO_ITEM_COUNT_PERCENT, AVERAGE_INSTRUCTION_AMOUNT, INSTRUCTION_BYTE};
+use crate::{
+    lcs::Lcs, AVERAGE_INSTRUCTION_AMOUNT, CHUNK_SIZE, INSTRUCTION_BYTE, ZERO_ITEM_COUNT_PERCENT,
+};
 use std::io::{self, BufReader, BufWriter, Read, Write};
 
 ///The actual chunk size used. A few bytes are subtracted to make place for the instruction identifiers.
 const REAL_CHUNK_SIZE: u8 = CHUNK_SIZE - (AVERAGE_INSTRUCTION_AMOUNT * 2);
 
-/// The size of one instruction buffer.
+/// The capcity allocated for the instruction buffer.
 const BUFFER_SIZE: usize = CHUNK_SIZE as usize;
-
 
 pub fn delta_encode<R: Read, W: Write>(source: R, target: R, patch: W) -> io::Result<()> {
     let mut source_reader = BufReader::new(source);
@@ -55,11 +56,8 @@ fn fill_instructions_buffer(source: &[u8], target: &[u8]) -> Vec<u8> {
             target_index += instruction_length;
         } else {
             //Copy
-            let instruction_length = copy_instruction_length(
-                &source[source_index..],
-                &target[target_index..],
-                &lcs,
-            );
+            let instruction_length =
+                copy_instruction_length(&source[source_index..], &target[target_index..], &lcs);
             instruction_buffer.push(INSTRUCTION_BYTE);
             instruction_buffer.extend(
                 (source[source_index..source_index + instruction_length])
@@ -106,11 +104,7 @@ fn add_instruction_length(target: &[u8], lcs: &[u8]) -> usize {
 }
 
 /// Returns the amount of bytes the next Copy instruction will take
-fn copy_instruction_length(
-    source: &[u8],
-    target: &[u8],
-    lcs: &[u8],
-) -> usize {
+fn copy_instruction_length(source: &[u8], target: &[u8], lcs: &[u8]) -> usize {
     let source_len = source.len();
     let target_len = target.len();
     let lcs_len = lcs.len();
@@ -164,19 +158,46 @@ mod encoder_tests {
         let source = vec![1, 1, 1, 0, 0, 0];
         let target = vec![1, 1, 1, 2, 2, 2];
         let lcs = Lcs::new(&source, &target).subsequence();
-        let mut zero_count = 0;
-        assert_eq!(
-            copy_instruction_length(&source, &target, &lcs),
-            6
-        );
-        assert_eq!(zero_count, 3);
+        assert_eq!(copy_instruction_length(&source, &target, &lcs), 6);
     }
 
     #[test]
     fn fill_instructions_buffer_test() {
         let source = vec![0, 0, 0, 1, 1, 1, 0, 0, 0];
-        let target = vec![1, 1, 1, 2, 2, 2];
+        let target = vec![1, 1, 1, 2, 2, 2, 3, 3, 3];
+        assert_eq!(
+            fill_instructions_buffer(&source, &target),
+            [0, 3, 0, 0, 0, 0, 2, 2, 2, 3, 3, 3, 3]
+        );
 
-        dbg!(fill_instructions_buffer(&source, &target));
+        let source = vec![0, 0, 0, 1, 1, 1];
+        let target = vec![1, 1, 1, 2, 2, 2, 3, 3, 3];
+        assert_eq!(
+            fill_instructions_buffer(&source, &target),
+            [0, 3, 0, 0, 0, 0, 6, 2, 2, 2, 3, 3, 3]
+        );
+
+        let source = vec![0, 0, 0, 1, 1, 1, 0, 0, 0];
+        let target = vec![1, 1, 1];
+        assert_eq!(
+            fill_instructions_buffer(&source, &target),
+            [0, 3, 0, 0, 0, 0, 0, 3]
+        );
+        
+        let source = vec![];
+        let target = vec![0; 255];
+        let mut expected_output = vec![255];
+        expected_output.extend(vec![0; 255]);
+        assert_eq!(
+            fill_instructions_buffer(&source, &target),
+            expected_output
+        );
+
+        let source = vec![0; 255];
+        let target = vec![];
+        assert_eq!(
+            fill_instructions_buffer(&source, &target),
+            vec![0, 255]
+        );
     }
 }
