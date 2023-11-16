@@ -4,10 +4,10 @@ use crate::{
 use std::io::{self, BufReader, BufWriter, Read, Write};
 
 ///The actual chunk size used. A few bytes are subtracted to make place for the instruction identifiers.
-const CHUNK_SIZE: u8 = WANTED_CHUNK_SIZE - (AVERAGE_INSTRUCTION_AMOUNT * 2);
+pub const CHUNK_SIZE: u8 = WANTED_CHUNK_SIZE - (AVERAGE_INSTRUCTION_AMOUNT * 2);
 
 /// The capcity allocated for the instruction buffer.
-const BUFFER_SIZE: usize = WANTED_CHUNK_SIZE as usize;
+pub const BUFFER_SIZE: usize = WANTED_CHUNK_SIZE as usize;
 
 pub fn delta_encode<R: Read, W: Write>(source: R, target: R, patch: W) -> io::Result<()> {
     let mut source_reader = BufReader::new(source);

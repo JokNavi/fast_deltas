@@ -1,4 +1,4 @@
-use crate::CHUNK_SIZE;
+use crate::encoder::CHUNK_SIZE;
 
 
 #[derive(Debug, Clone, PartialEq)]
