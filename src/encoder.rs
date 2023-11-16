@@ -1,21 +1,21 @@
 use crate::{
-    lcs::Lcs, AVERAGE_INSTRUCTION_AMOUNT, CHUNK_SIZE, INSTRUCTION_BYTE, ZERO_ITEM_COUNT_PERCENT,
+    lcs::Lcs, AVERAGE_INSTRUCTION_AMOUNT, WANTED_CHUNK_SIZE, INSTRUCTION_BYTE, ZERO_ITEM_COUNT_PERCENT,
 };
 use std::io::{self, BufReader, BufWriter, Read, Write};
 
 ///The actual chunk size used. A few bytes are subtracted to make place for the instruction identifiers.
-const REAL_CHUNK_SIZE: u8 = CHUNK_SIZE - (AVERAGE_INSTRUCTION_AMOUNT * 2);
+const CHUNK_SIZE: u8 = WANTED_CHUNK_SIZE - (AVERAGE_INSTRUCTION_AMOUNT * 2);
 
 /// The capcity allocated for the instruction buffer.
-const BUFFER_SIZE: usize = CHUNK_SIZE as usize;
+const BUFFER_SIZE: usize = WANTED_CHUNK_SIZE as usize;
 
 pub fn delta_encode<R: Read, W: Write>(source: R, target: R, patch: W) -> io::Result<()> {
     let mut source_reader = BufReader::new(source);
     let mut target_reader = BufReader::new(target);
     let mut patch_writer = BufWriter::new(patch);
 
-    let mut source_buffer = [0u8; REAL_CHUNK_SIZE as usize];
-    let mut target_buffer = [0u8; REAL_CHUNK_SIZE as usize];
+    let mut source_buffer = [0u8; CHUNK_SIZE as usize];
+    let mut target_buffer = [0u8; CHUNK_SIZE as usize];
 
     let mut source_bytes_read = source_reader.read(&mut source_buffer)?;
     let mut target_bytes_read = target_reader.read(&mut target_buffer)?;

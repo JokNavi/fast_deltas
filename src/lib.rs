@@ -9,7 +9,7 @@ const INSTRUCTION_BYTE: u8 = 0;
 
 /// The size of the source and target chunk stored in memory, in bytes.
 /// Increasing this will increase the memory required for each chunk exponentially. (Due to the current Lcs implementation.)
-pub const CHUNK_SIZE: u8 = 255;
+pub const WANTED_CHUNK_SIZE: u8 = 255;
 
 /// The average amount of induvidual instructions per chunk 
 const AVERAGE_INSTRUCTION_AMOUNT: u8 = 5;
