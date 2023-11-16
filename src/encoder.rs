@@ -129,10 +129,10 @@ mod encoder_tests {
 
     #[test]
     fn remove_instruction_length_test() {
-        let source = vec![0; 255];
+        let source = vec![0; CHUNK_SIZE as usize];
         let target = vec![];
         let lcs = Lcs::new(&source, &target).subsequence();
-        assert_eq!(remove_instruction_length(&source, &lcs), 255);
+        assert_eq!(remove_instruction_length(&source, &lcs), CHUNK_SIZE as usize);
 
         let source = vec![0, 0, 0, 1, 1, 1];
         let target = vec![1, 1, 1];
@@ -143,9 +143,9 @@ mod encoder_tests {
     #[test]
     fn add_instruction_length_test() {
         let source = vec![];
-        let target = vec![0; 255];
+        let target = vec![0; CHUNK_SIZE as usize];
         let lcs = Lcs::new(&source, &target).subsequence();
-        assert_eq!(add_instruction_length(&target, &lcs), 255);
+        assert_eq!(add_instruction_length(&target, &lcs), CHUNK_SIZE as usize);
 
         let source = vec![0, 0, 0, 1, 1, 1];
         let target = vec![2, 2, 2];
@@ -185,19 +185,19 @@ mod encoder_tests {
         );
         
         let source = vec![];
-        let target = vec![0; 255];
-        let mut expected_output = vec![255];
-        expected_output.extend(vec![0; 255]);
+        let target = vec![0; CHUNK_SIZE as usize];
+        let mut expected_output = vec![CHUNK_SIZE];
+        expected_output.extend(vec![0; CHUNK_SIZE as usize]);
         assert_eq!(
             fill_instructions_buffer(&source, &target),
             expected_output
         );
 
-        let source = vec![0; 255];
+        let source = vec![0; CHUNK_SIZE as usize];
         let target = vec![];
         assert_eq!(
             fill_instructions_buffer(&source, &target),
-            vec![0, 255]
+            vec![0, CHUNK_SIZE]
         );
     }
 }
