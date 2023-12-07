@@ -43,9 +43,9 @@ mod encoder_benchmarks {
     #[bench]
     fn bench_copy_instruction_length(b: &mut Bencher) {
         let mut source = vec![0u8; u16::MAX as usize / 2];
-        source.extend([1; u16::MAX as usize / 2]);
-        let target = [0; u16::MAX as usize];
-        let lcs = [0; u16::MAX as usize / 2];
+        source.extend(vec![1; u16::MAX as usize / 2]);
+        let target = vec![0; u16::MAX as usize];
+        let lcs = vec![0; u16::MAX as usize / 2];
         b.iter(|| {
             CopyInstructionIterator::new(black_box(&lcs), black_box(&target), black_box(&target));
         })
