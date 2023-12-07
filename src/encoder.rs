@@ -1,8 +1,12 @@
 use crate::{
-    lcs::Lcs, AVERAGE_INSTRUCTION_AMOUNT, INSTRUCTION_BYTE, WANTED_CHUNK_SIZE,
-    ZERO_ITEM_COUNT_PERCENT,
+    lcs::Lcs, AVERAGE_INSTRUCTION_AMOUNT, INSTRUCTION_BYTE, NON_INSTRUCTION_BYTE_COUNT_PERCENT,
+    WANTED_CHUNK_SIZE,
 };
-use std::io::{self, BufReader, BufWriter, Read, Write};
+use std::{
+    io::{self, BufReader, BufWriter, Read, Write},
+    iter::Peekable,
+    slice::Iter,
+};
 
 ///The actual chunk size used. A few bytes are subtracted to make place for the instruction identifiers.
 pub const CHUNK_SIZE: u8 = WANTED_CHUNK_SIZE - (AVERAGE_INSTRUCTION_AMOUNT * 2);
@@ -15,10 +19,6 @@ pub fn delta_encode<R: Read, W: Write>(source: R, target: R, patch: W) -> io::Re
 }
 
 fn fill_instruction_buffer(lcs: &[u8], source: &[u8], target: &[u8]) {
-    todo!();
-}
-
-fn copy_instruction_length(lcs: &[u8], source: &[u8], target: &[u8]) -> usize {
     todo!();
 }
 
@@ -51,6 +51,7 @@ mod encoder_tests {
         let source = [1, 1, 1];
         let target = [0, 0, 0, 1, 1, 1];
         let lcs = Lcs::new(&source, &target).subsequence();
-        assert_eq!(remove_instruction_length(&target, lcs.first()), 3);
+        assert_eq!(add_instruction_length(&target, lcs.first()), 3);
     }
+
 }

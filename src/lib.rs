@@ -1,10 +1,11 @@
 pub mod encoder;
 pub mod lcs;
+pub mod copy_instruction_iterator;
 
 /// ### Special: Check next byte.
 /// If the next byte IS a 0 it is a copy instruction.
 /// If the next byte IS NOT a 0 it is a remove instruction.
-/// If the that should have been INSTRUCTION_BYTE is not equal to 0 it is an add instruction.
+/// If the that should have been INSTRUCTION_BYTE is not equal to INSTRUCTION_BYTE's value it is an add instruction.
 pub const INSTRUCTION_BYTE: u8 = 0;
 
 /// The size of the source and target chunk stored in memory, in bytes.
@@ -14,8 +15,8 @@ pub const WANTED_CHUNK_SIZE: u8 = 255;
 /// The average amount of induvidual instructions per chunk
 const AVERAGE_INSTRUCTION_AMOUNT: u8 = 5;
 
-///The maximum percent of non 0 values in a copy instruction.
-pub const ZERO_ITEM_COUNT_PERCENT: usize = 100;
+///The maximum percent of values in a copy instruction that **are not** equal to INSTRUCTION_BYTE's value.
+pub const NON_INSTRUCTION_BYTE_COUNT_PERCENT: usize = 50;
 
 #[cfg(test)]
 mod tests {

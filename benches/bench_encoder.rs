@@ -1,5 +1,7 @@
 #![feature(test)]
+
 extern crate test;
+
 
 fn remove_instruction_length(source: &[u8], next_lcs_item: Option<&u8>) -> usize {
     if let Some(&item) = next_lcs_item {
