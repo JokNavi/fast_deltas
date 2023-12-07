@@ -21,11 +21,11 @@ fn copy_instruction_length(lcs: &[u8], source: &[u8], target: &[u8]) -> usize {
     todo!();
 } 
 
-fn add_instruction_length(lcs: &[u8], target: &[u8]) -> usize {
+fn add_instruction_length(target: &[u8], next_lcs_item: Option<&u8>) -> usize {
     todo!();
 }
 
-fn remove_instruction_length(lcs: &[u8], source: &[u8]) -> usize {
+fn remove_instruction_length(source: &[u8], next_lcs_item: Option<&u8>) -> usize {
     todo!();
 }
 
