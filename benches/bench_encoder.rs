@@ -9,6 +9,10 @@ fn remove_instruction_length(source: &[u8], next_lcs_item: Option<&u8>) -> usize
     }
 }
 
+fn add_instruction_length(target: &[u8], next_lcs_item: Option<&u8>) -> usize {
+    remove_instruction_length(&target, next_lcs_item)
+}
+
 #[cfg(test)]
 mod encoder_benchmarks {
     use super::*;
@@ -22,6 +26,16 @@ mod encoder_benchmarks {
         let lcs = Lcs::new(&source, &target).subsequence();
         b.iter(|| {
             remove_instruction_length(black_box(&source), black_box(lcs.first()));
+        })
+    }
+
+    #[bench]
+    fn bench_add_instruction_length(b: &mut Bencher) {
+        let source = [];
+        let target = [0; u16::MAX as usize];
+        let lcs = Lcs::new(&source, &target).subsequence();
+        b.iter(|| {
+            add_instruction_length(black_box(&target), black_box(lcs.first()));
         })
     }    
 
