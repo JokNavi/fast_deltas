@@ -1,5 +1,6 @@
 use crate::{
-    lcs::Lcs, AVERAGE_INSTRUCTION_AMOUNT, WANTED_CHUNK_SIZE, INSTRUCTION_BYTE, ZERO_ITEM_COUNT_PERCENT,
+    lcs::Lcs, AVERAGE_INSTRUCTION_AMOUNT, INSTRUCTION_BYTE, WANTED_CHUNK_SIZE,
+    ZERO_ITEM_COUNT_PERCENT,
 };
 use std::io::{self, BufReader, BufWriter, Read, Write};
 
@@ -19,19 +20,29 @@ fn fill_instruction_buffer(lcs: &[u8], source: &[u8], target: &[u8]) {
 
 fn copy_instruction_length(lcs: &[u8], source: &[u8], target: &[u8]) -> usize {
     todo!();
-} 
+}
 
 fn add_instruction_length(target: &[u8], next_lcs_item: Option<&u8>) -> usize {
     todo!();
 }
 
 fn remove_instruction_length(source: &[u8], next_lcs_item: Option<&u8>) -> usize {
-    todo!();
+    if let Some(&item) = next_lcs_item {
+        source.iter().position(|&x| x == item).unwrap_or(0)
+    } else {
+        0
+    }
 }
-
 
 #[cfg(test)]
 mod encoder_tests {
     use super::*;
 
+    #[test]
+    fn test_remove_instruction_length() {
+        let source = [0, 0, 0, 1, 1, 1];
+        let target = [1, 1, 1];
+        let lcs = Lcs::new(&source, &target).subsequence();
+        assert_eq!(remove_instruction_length(&source, lcs.first()), 3);
+    }
 }
