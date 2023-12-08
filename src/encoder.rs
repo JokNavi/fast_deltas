@@ -22,13 +22,19 @@ fn fill_instruction_buffer(lcs: &[u8], source: &[u8], target: &[u8]) {
     todo!();
 }
 
-fn add_instruction_length(target: &[u8], next_lcs_item: Option<&u8>) -> usize {
-    remove_instruction_length(&target, next_lcs_item)
+fn add_instruction_length<'a, T>(target: T, next_lcs_item: Option<&u8>) -> usize
+where
+T: IntoIterator<Item = &'a u8, IntoIter = std::slice::Iter<'a, u8>>,
+{
+    remove_instruction_length(target, next_lcs_item)
 }
 
-fn remove_instruction_length(source: &[u8], next_lcs_item: Option<&u8>) -> usize {
+fn remove_instruction_length<'a, T>(source: T, next_lcs_item: Option<&u8>) -> usize
+where
+T: IntoIterator<Item = &'a u8, IntoIter = std::slice::Iter<'a, u8>>,
+{
     if let Some(&item) = next_lcs_item {
-        source.iter().position(|&x| x == item).unwrap_or(0)
+        source.into_iter().position(|&x| x == item).unwrap_or(0)
     } else {
         0
     }
@@ -53,5 +59,4 @@ mod encoder_tests {
         let lcs = Lcs::new(&source, &target).subsequence();
         assert_eq!(add_instruction_length(&target, lcs.first()), 3);
     }
-
 }
