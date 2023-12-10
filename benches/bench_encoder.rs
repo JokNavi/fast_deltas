@@ -26,7 +26,7 @@ mod encoder_benchmarks {
         let target = [];
         let lcs = Lcs::new(&source, &target).subsequence();
         b.iter(|| {
-            remove_instruction_length(black_box(&source), black_box(lcs.first()));
+            black_box(remove_instruction_length(black_box(&source), black_box(lcs.first())));
         })
     }
 
@@ -36,7 +36,7 @@ mod encoder_benchmarks {
         let target = [0; u16::MAX as usize];
         let lcs = Lcs::new(&source, &target).subsequence();
         b.iter(|| {
-            add_instruction_length(black_box(&target), black_box(lcs.first()));
+            black_box(add_instruction_length(black_box(&target), black_box(lcs.first())));
         })
     }
 
@@ -47,7 +47,7 @@ mod encoder_benchmarks {
         let target = vec![0; u16::MAX as usize];
         let lcs = vec![0; u16::MAX as usize / 2];
         b.iter(|| {
-            CopyInstructionIterator::new(black_box(&lcs), black_box(&target), black_box(&target));
+            black_box(CopyInstructionIterator::new(black_box(&lcs), black_box(&target), black_box(&target)));
         })
     }
 }

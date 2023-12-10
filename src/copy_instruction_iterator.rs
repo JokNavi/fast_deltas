@@ -11,17 +11,13 @@ pub struct CopyInstructionIterator<'a> {
 }
 
 impl<'a> CopyInstructionIterator<'a> {
-    pub fn new<T>(
-        lcs: T,
-        source: T,
-        target: T,
-    ) -> Self 
+    pub fn new<T>(lcs: T, source: T, target: T) -> Self
     where
         T: IntoIterator<Item = &'a u8, IntoIter = std::slice::Iter<'a, u8>>,
     {
         CopyInstructionIterator {
             lcs: lcs.into_iter().peekable(),
-            zipped_iter: source.into_iter().zip(target).enumerate(),
+            zipped_iter: source.into_iter().zip(target.into_iter()).enumerate(),
             non_instruction_byte_values_count: 0,
         }
     }
