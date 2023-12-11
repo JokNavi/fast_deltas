@@ -17,7 +17,7 @@ fn add_instruction_length(target: &[u8], next_lcs_item: Option<&u8>) -> usize {
 #[cfg(test)]
 mod encoder_benchmarks {
     use super::*;
-    use fast_deltas::{copy_instruction_iterator::CopyInstructionIterator, lcs::Lcs};
+    use fast_deltas::{copy_instruction_iterator::{CopyInstructionIterator, self}, lcs::Lcs};
     use test::{black_box, Bencher};
 
     #[bench]
@@ -47,7 +47,8 @@ mod encoder_benchmarks {
         let target = vec![0; u16::MAX as usize];
         let lcs = vec![0; u16::MAX as usize / 2];
         b.iter(|| {
-            black_box(CopyInstructionIterator::new(black_box(&lcs), black_box(&target), black_box(&target)));
+            let copy_instruction_iterator = black_box(CopyInstructionIterator::new(black_box(&lcs), black_box(&target), black_box(&target)));
+            let copy_instruction: Vec<u8> = copy_instruction_iterator.collect();
         })
     }
 }
