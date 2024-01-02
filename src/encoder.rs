@@ -39,7 +39,7 @@ where
     }
 }
 
-fn copy_instruction_length<'a, T>(source: T, target: T, lcs: T) -> (usize, usize)
+pub fn copy_instruction_length<'a, T>(source: T, target: T, lcs: T) -> (usize, usize)
 where
     T: IntoIterator<Item = &'a u8, IntoIter = std::slice::Iter<'a, u8>>,
 {
