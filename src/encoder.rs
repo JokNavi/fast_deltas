@@ -1,4 +1,7 @@
-use crate::{lcs::Lcs, AVERAGE_INSTRUCTION_AMOUNT, INSTRUCTION_BYTE, WANTED_CHUNK_SIZE, NON_INSTRUCTION_BYTE_COUNT_PERCENT};
+use crate::{
+    lcs::Lcs, AVERAGE_INSTRUCTION_AMOUNT, INSTRUCTION_BYTE, NON_INSTRUCTION_BYTE_COUNT_PERCENT,
+    WANTED_CHUNK_SIZE,
+};
 use std::io::{self, BufReader, BufWriter, Read, Write};
 
 ///The actual chunk size used. A few bytes are subtracted to make place for the instruction identifiers.
@@ -52,12 +55,10 @@ where
             < NON_INSTRUCTION_BYTE_COUNT_PERCENT as f32
         {
             non_instruction_byte_values_count += 1;
-        }else {
+        } else {
             return (*lcs_index, items_index);
         }
-        
     }
-
     (0, 0)
 }
 
