@@ -1,5 +1,7 @@
 use divan::{black_box, Bencher};
-use fast_deltas::{copy_instruction_iterator::CopyInstructionIterator, lcs::Lcs};
+use fast_deltas::{
+    instruction_iterators::copy_instruction_iterator::CopyInstructionIterator, lcs::Lcs,
+};
 
 #[divan::bench]
 fn bench_copy_instruction_iterator(bencher: Bencher) {

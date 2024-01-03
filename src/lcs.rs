@@ -1,5 +1,3 @@
-use crate::encoder::CHUNK_SIZE;
-
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Lcs<'a> {
@@ -13,8 +11,8 @@ impl<'a> Lcs<'a> {
     pub fn new(source: &'a [u8], target: &'a [u8]) -> Self {
         let source_length = source.len();
         let target_length = target.len();
-        debug_assert!(source_length <= CHUNK_SIZE as usize);
-        debug_assert!(target_length <= CHUNK_SIZE as usize);
+        debug_assert!(source_length <= u8::MAX as usize);
+        debug_assert!(target_length <= u8::MAX as usize);
         let mut table: Vec<Vec<u8>> = vec![vec![0; target_length + 1]; source_length + 1];
 
         for x in 0..=source_length {
@@ -80,7 +78,7 @@ mod lcs_tests {
 
     #[test]
     fn new_ok() {
-        let source = vec![0; CHUNK_SIZE as usize];
+        let source = vec![0; 245];
         let target = source.clone();
         let lcs = Lcs::new(&source, &target);
         assert_eq!(
@@ -96,28 +94,28 @@ mod lcs_tests {
     #[test]
     #[should_panic]
     fn new_panic() {
-        let source = vec![0; CHUNK_SIZE as usize + 1];
+        let source = vec![0; u8::MAX as usize + 1];
         let target = vec![];
         Lcs::new(&source, &target);
     }
 
     #[test]
     fn is_empty() {
-        let source = vec![0; CHUNK_SIZE as usize];
+        let source = vec![0; 245];
         let target = vec![];
         assert_eq!(Lcs::new(&source, &target).len(), 0);
     }
 
     #[test]
     fn len() {
-        let source = vec![0; CHUNK_SIZE as usize];
+        let source = vec![0; 245];
         let target = source.clone();
-        assert_eq!(Lcs::new(&source, &target).len(), CHUNK_SIZE as usize);
+        assert_eq!(Lcs::new(&source, &target).len(), 245);
     }
 
     #[test]
     fn subsequence() {
-        let source: Vec<u8> = vec![0; CHUNK_SIZE as usize];
+        let source: Vec<u8> = vec![0; 245];
         let target = source.clone();
         let lcs = Lcs::new(&source, &target);
         let subsequence = lcs.subsequence();
@@ -129,7 +127,7 @@ mod lcs_tests {
         assert_eq!(subsequence, b"MJAU");
         assert_eq!(subsequence.len(), lcs.len());
 
-        let source = vec![0; CHUNK_SIZE as usize];
+        let source = vec![0; 245];
         let target = vec![];
         let lcs = Lcs::new(&source, &target);
         let subsequence = lcs.subsequence();
