@@ -21,14 +21,14 @@ fn fill_instruction_buffer(lcs: &[u8], source: &[u8], target: &[u8]) {
     let mut lcs_index: usize = 0;
 }
 
-fn add_instruction_length<'a, T>(target: T, next_lcs_item: Option<&u8>) -> usize
+pub fn add_instruction_length<'a, T>(target: T, next_lcs_item: Option<&u8>) -> usize
 where
     T: IntoIterator<Item = &'a u8, IntoIter = std::slice::Iter<'a, u8>>,
 {
     remove_instruction_length(target, next_lcs_item)
 }
 
-fn remove_instruction_length<'a, T>(source: T, next_lcs_item: Option<&u8>) -> usize
+pub fn remove_instruction_length<'a, T>(source: T, next_lcs_item: Option<&u8>) -> usize
 where
     T: IntoIterator<Item = &'a u8, IntoIter = std::slice::Iter<'a, u8>>,
 {
