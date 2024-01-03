@@ -4,6 +4,8 @@ use std::{
 };
 
 use crate::NON_INSTRUCTION_BYTE_COUNT_PERCENT;
+
+#[derive(Debug, Clone)]
 pub struct CopyInstructionIterator<'a> {
     lcs: Peekable<Iter<'a, u8>>,
     zipped_iter: Enumerate<Zip<Iter<'a, u8>, Iter<'a, u8>>>,
