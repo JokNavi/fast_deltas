@@ -1,5 +1,5 @@
 pub mod lcs;
-pub mod instruction_iterators;
+pub mod iterators;
 
 /// ### Special: Check next byte.
 /// If the next byte IS a 0 it is a copy instruction.

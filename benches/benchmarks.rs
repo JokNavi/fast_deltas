@@ -1,5 +1,5 @@
 
-pub mod instruction_iterators;
+pub mod iterators;
 pub mod lcs;
 
 fn main() {
