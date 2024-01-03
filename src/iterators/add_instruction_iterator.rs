@@ -1,5 +1,3 @@
-use std::slice::Iter;
-
 use super::remove_instruction_iterator::RemoveInstructionIterator;
 
 #[derive(Debug, Clone)]

@@ -1,4 +1,3 @@
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct Lcs<'a> {
     source: &'a [u8],

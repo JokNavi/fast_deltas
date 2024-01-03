@@ -38,7 +38,7 @@ mod remove_instruction_iterator_tests {
     #[test]
     fn test_next() {
         let source = vec![0, 0, 0, 2, 3, 0];
-        let target = vec![1, 1, 1, 2, 2, 1,];
+        let target = vec![1, 1, 1, 2, 2, 1];
         let lcs = Lcs::new(&source, &target).subsequence();
         let mut copy_instruction_iterator = RemoveInstructionIterator::new(&source, lcs.first());
         assert!(copy_instruction_iterator.next().is_some());

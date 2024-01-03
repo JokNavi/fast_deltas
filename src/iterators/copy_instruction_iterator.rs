@@ -58,8 +58,7 @@ mod copy_instruction_iterator_tests {
         let source = vec![0, 0, 1, 1, 1, 0];
         let target = vec![0, 0, 2, 2, 2, 0];
         let lcs = Lcs::new(&source, &target).subsequence();
-        let mut copy_instruction_iterator =
-            CopyInstructionIterator::new(&lcs, &source, &target);
+        let mut copy_instruction_iterator = CopyInstructionIterator::new(&lcs, &source, &target);
         assert!(copy_instruction_iterator.next().is_some());
         assert!(copy_instruction_iterator.next().is_some());
         assert!(copy_instruction_iterator.next().is_some());
