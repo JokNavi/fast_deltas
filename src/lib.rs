@@ -1,6 +1,5 @@
 pub mod encoder;
 pub mod lcs;
-pub mod copy_instruction_iterator;
 
 /// ### Special: Check next byte.
 /// If the next byte IS a 0 it is a copy instruction.
