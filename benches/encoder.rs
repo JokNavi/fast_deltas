@@ -1,6 +1,7 @@
 use divan::{black_box, Bencher};
 use fast_deltas::{
-    encoder::{copy_instruction_length, add_instruction_length, remove_instruction_length}, lcs::Lcs,
+    encoder::{add_instruction_length, copy_instruction_length, remove_instruction_length},
+    lcs::Lcs,
 };
 
 #[divan::bench]

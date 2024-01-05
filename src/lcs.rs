@@ -1,6 +1,5 @@
 use crate::encoder::CHUNK_SIZE;
 
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct Lcs<'a> {
     source: &'a [u8],

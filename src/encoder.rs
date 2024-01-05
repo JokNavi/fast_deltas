@@ -2,7 +2,10 @@ use crate::{
     lcs::Lcs, AVERAGE_INSTRUCTION_AMOUNT, INSTRUCTION_BYTE, NON_INSTRUCTION_BYTE_COUNT_PERCENT,
     WANTED_CHUNK_SIZE,
 };
-use std::io::{self, BufReader, BufWriter, Read, Write};
+use std::{
+    cmp::max,
+    io::{self, BufReader, BufWriter, Read, Write},
+};
 
 ///The actual chunk size used. A few bytes are subtracted to make place for the instruction identifiers.
 pub const CHUNK_SIZE: u8 = WANTED_CHUNK_SIZE - (AVERAGE_INSTRUCTION_AMOUNT * 2);
@@ -15,29 +18,28 @@ pub fn delta_encode<R: Read, W: Write>(source: R, target: R, patch: W) -> io::Re
 }
 
 fn fill_instruction_buffer(lcs: &[u8], source: &[u8], target: &[u8]) -> Vec<u8> {
-    let lcs = Lcs::new(source, target).subsequence();
+    let bytes = Vec::with_capacity(max(source.len(), target.len()));
     let mut source_index: usize = 0;
     let mut target_index: usize = 0;
     let mut lcs_index: usize = 0;
-    todo!();
 }
 
-pub fn add_instruction_length<'a>(target: &[u8], next_lcs_item: Option<&u8>) -> usize
-{
+pub fn add_instruction_length<'a>(target: &[u8], next_lcs_item: Option<u8>) -> usize {
     remove_instruction_length(target, next_lcs_item)
 }
 
-pub fn remove_instruction_length<'a>(source: &[u8], next_lcs_item: Option<&u8>) -> usize
-{
-    if let Some(&item) = next_lcs_item {
-        source.into_iter().position(|&x| x == item).unwrap_or(source.len())
+pub fn remove_instruction_length<'a>(source: &[u8], next_lcs_item: Option<u8>) -> usize {
+    if let Some(item) = next_lcs_item {
+        source
+            .into_iter()
+            .position(|&x| x == item)
+            .unwrap_or(source.len())
     } else {
         source.len()
     }
 }
 
-pub fn copy_instruction_length<'a>(source: &[u8], target: &[u8], lcs: &[u8]) -> (usize, usize)
-{
+pub fn copy_instruction_length<'a>(source: &[u8], target: &[u8], lcs: &[u8]) -> (usize, usize) {
     let mut non_instruction_byte_values_count: usize = 0;
     let mut zipped_iter = source.iter().zip(target.into_iter()).enumerate();
     let mut lcs = lcs.iter().enumerate().peekable();
@@ -66,7 +68,7 @@ mod encoder_tests {
         let source = [1, 1, 1, 0, 0, 0];
         let target = [0, 0, 0];
         let lcs = Lcs::new(&source, &target).subsequence();
-        assert_eq!(remove_instruction_length(&source, lcs.first()), 3);
+        assert_eq!(remove_instruction_length(&source, lcs.first().copied()), 3);
     }
 
     #[test]
@@ -74,7 +76,7 @@ mod encoder_tests {
         let source = [0, 0, 0];
         let target = [1, 1, 1, 0, 0, 0];
         let lcs = Lcs::new(&source, &target).subsequence();
-        assert_eq!(add_instruction_length(&target, lcs.first()), 3);
+        assert_eq!(add_instruction_length(&target, lcs.first().copied()), 3);
     }
 
     #[test]
