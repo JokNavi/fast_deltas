@@ -26,7 +26,7 @@ fn bench_add_instruction_length(bencher: Bencher) {
     bencher.bench_local(move || {
         black_box(add_instruction_length(
             black_box(&target),
-            black_box(lcs.first()),
+            black_box(lcs.first().copied()),
         ));
     });
 }
@@ -39,7 +39,7 @@ fn bench_remove_instruction_length(bencher: Bencher) {
     bencher.bench_local(move || {
         black_box(remove_instruction_length(
             black_box(&source),
-            black_box(lcs.first()),
+            black_box(lcs.first().copied()),
         ));
     });
 }
