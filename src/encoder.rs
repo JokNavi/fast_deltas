@@ -17,7 +17,7 @@ pub fn delta_encode<R: Read, W: Write>(source: R, target: R, patch: W) -> io::Re
     todo!();
 }
 
-fn create_instruction_buffer(source: &[u8], target: &[u8]) -> Vec<u8> {
+fn create_instructions(source: &[u8], target: &[u8]) -> Vec<u8> {
     let mut bytes: Vec<u8> = Vec::with_capacity(max(source.len(), target.len()));
     let lcs = Lcs::new(&source, &target).subsequence();
     let mut source_index: usize = 0;
@@ -61,11 +61,11 @@ fn create_instruction_buffer(source: &[u8], target: &[u8]) -> Vec<u8> {
     if source[source_index..].len() > 0 {
         //remove
         bytes.push(INSTRUCTION_BYTE);
-        bytes.push(source.len().try_into().unwrap());
+        bytes.push(source[source_index..].len().try_into().unwrap());
     }
     if target[target_index..].len() > 0 {
         //add
-        bytes.push(target.len().try_into().unwrap());
+        bytes.push(target[target_index..].len().try_into().unwrap());
         bytes.extend(target[target_index..].iter());
     }
     bytes
@@ -86,24 +86,26 @@ pub fn remove_instruction_length<'a>(source: &[u8], next_lcs_item: Option<u8>) -
     }
 }
 
-pub fn copy_instruction_length<'a>(source: &[u8], target: &[u8], lcs: &[u8]) -> (usize, usize) {
+pub fn copy_instruction_length(source: &[u8], target: &[u8], lcs: &[u8]) -> (usize, usize) {
     let mut non_instruction_byte_values_count: usize = 0;
-    let mut zipped_iter = source.iter().zip(target.into_iter()).enumerate();
-    let mut lcs_iter = lcs.iter().enumerate().peekable();
-    while let (Some((lcs_index, lcs_num)), Some((items_index, (source_num, target_num)))) =
-        (lcs_iter.peek(), zipped_iter.next())
-    {
-        if source_num == *lcs_num && target_num == *lcs_num {
-            lcs_iter.next();
-        } else if (non_instruction_byte_values_count as f32 / items_index as f32) * 100.0
-            < NON_INSTRUCTION_BYTE_COUNT_PERCENT as f32
+    let (mut item_index, mut lcs_index) = (0, 0);
+    while item_index < source.len() && item_index < target.len() {
+        if lcs_index < lcs.len()
+            && source[item_index] == lcs[lcs_index]
+            && target[item_index] == lcs[lcs_index]
         {
-            non_instruction_byte_values_count += 1;
+            lcs_index += 1;
         } else {
-            return (*lcs_index, items_index);
+            non_instruction_byte_values_count += 1;
         }
+        if (non_instruction_byte_values_count as f32 / (item_index + 1) as f32) * 100.0
+            > NON_INSTRUCTION_BYTE_COUNT_PERCENT as f32
+        {
+            break;
+        }
+        item_index += 1;
     }
-    (lcs.len()-lcs_iter.count(), min(source.len(), target.len())-zipped_iter.count())
+    (lcs_index, item_index)
 }
 
 #[cfg(test)]
@@ -130,16 +132,16 @@ mod encoder_tests {
 
     #[test]
     fn test_copy_instruction_length() {
-        let source = vec![0, 0, 1, 1, 1, 0];
-        let target = vec![0, 0, 2, 2, 2, 0];
+        let source = vec![0, 0, 2, 2];
+        let target = vec![0, 0, 1, 1];
         let lcs = Lcs::new(&source, &target).subsequence();
         assert_eq!(copy_instruction_length(&source, &target, &lcs), (2, 4));
     }
 
     #[test]
     fn test_create_instruction_buffer() {
-        let source = vec![0, 0, 0];
-        let target = vec![0, 0, 0];
-        dbg!(create_instruction_buffer(&source, &target));
+        let source = vec![0, 2, 2];
+        let target = vec![0, 1, 1];
+        dbg!(create_instructions(&source, &target));
     }
 }
