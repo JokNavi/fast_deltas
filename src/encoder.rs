@@ -3,8 +3,8 @@ use crate::{
     WANTED_CHUNK_SIZE,
 };
 use std::{
-    cmp::{max, min},
-    io::{self, BufReader, BufWriter, Read, Write},
+    cmp::max,
+    io::{self, Read, Write},
 };
 
 ///The actual chunk size used. A few bytes are subtracted to make place for the instruction identifiers.
@@ -17,9 +17,9 @@ pub fn delta_encode<R: Read, W: Write>(source: R, target: R, patch: W) -> io::Re
     todo!();
 }
 
-fn create_instructions(source: &[u8], target: &[u8]) -> Vec<u8> {
-    let mut bytes: Vec<u8> = Vec::with_capacity(max(source.len(), target.len()));
+pub fn create_instructions(source: &[u8], target: &[u8]) -> Vec<u8> {
     let lcs = Lcs::new(&source, &target).subsequence();
+    let mut bytes: Vec<u8> = Vec::with_capacity(max(source.len(), target.len())+lcs.len());
     let mut source_index: usize = 0;
     let mut target_index: usize = 0;
     let mut lcs_index: usize = 0;

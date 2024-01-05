@@ -1,6 +1,6 @@
 use divan::{black_box, Bencher};
 use fast_deltas::{
-    encoder::{add_instruction_length, copy_instruction_length, remove_instruction_length},
+    encoder::{add_instruction_length, copy_instruction_length, remove_instruction_length, create_instructions},
     lcs::Lcs,
 };
 
@@ -40,6 +40,18 @@ fn bench_remove_instruction_length(bencher: Bencher) {
         black_box(remove_instruction_length(
             black_box(&source),
             black_box(lcs.first().copied()),
+        ));
+    });
+}
+
+#[divan::bench]
+fn bench_create_instructions(bencher: Bencher) {
+    let source = vec![0; 255];
+    let target = vec![0; 255];
+    bencher.bench_local(move || {
+        black_box(create_instructions(
+            black_box(&source),
+            black_box(&target),
         ));
     });
 }
