@@ -1,11 +1,39 @@
 use crate::{lcs::Lcs, CHUNK_SIZE, INSTRUCTION_BYTE, NON_INSTRUCTION_BYTE_COUNT_PERCENT};
 use std::{
     cmp::max,
-    io::{self, Read, Write},
+    io::{self, BufReader, BufWriter, Read, Write},
 };
 
 pub fn delta_encode<R: Read, W: Write>(source: R, target: R, patch: W) -> io::Result<()> {
-    todo!();
+    let mut source_reader = BufReader::with_capacity(CHUNK_SIZE, source);
+    let mut target_reader = BufReader::with_capacity(CHUNK_SIZE, target);
+    let mut patch_writer = BufWriter::with_capacity(CHUNK_SIZE + 15, patch);
+
+    let mut source_buffer = Vec::with_capacity(CHUNK_SIZE);
+    let mut target_buffer = Vec::with_capacity(CHUNK_SIZE);
+
+    loop {
+        let source_len = source_reader
+            .by_ref()
+            .take(CHUNK_SIZE as u64)
+            .read_to_end(&mut source_buffer)?;
+        let target_len = target_reader
+            .by_ref()
+            .take(CHUNK_SIZE as u64)
+            .read_to_end(&mut target_buffer)?;
+
+        if source_len == 0 && target_len == 0 {
+            break;
+        }
+
+        let instructions = create_instructions(&source_buffer, &target_buffer);
+        patch_writer.write_all(&instructions)?;
+        source_buffer.clear();
+        target_buffer.clear();
+    }
+
+    patch_writer.flush()?;
+    Ok(())
 }
 
 pub fn create_instructions(source: &[u8], target: &[u8]) -> Vec<u8> {
@@ -16,8 +44,13 @@ pub fn create_instructions(source: &[u8], target: &[u8]) -> Vec<u8> {
     let mut source_index: usize = 0;
     let mut target_index: usize = 0;
     let mut lcs_index: usize = 0;
-    while !lcs.is_empty() && lcs_index < lcs.len() {
+    while !lcs.is_empty()
+        && lcs_index < lcs.len()
+        && source_index < source.len()
+        && target_index < target.len()
+    {
         if source[source_index] == target[target_index] {
+            //line 48
             //copy
             bytes.push(INSTRUCTION_BYTE);
             let (lcs_count, items_count) = copy_instruction_length(
@@ -45,7 +78,7 @@ pub fn create_instructions(source: &[u8], target: &[u8]) -> Vec<u8> {
         } else if target[target_index] != lcs[lcs_index] {
             //add
             let target_count =
-                add_instruction_length(&target[source_index..], Some(lcs[lcs_index]));
+                add_instruction_length(&target[target_index..], Some(lcs[lcs_index]));
             bytes.push(target_count.try_into().unwrap());
             bytes.extend(target[target_index..].iter().take(target_count));
             target_index += target_count;
@@ -103,6 +136,11 @@ pub fn copy_instruction_length(source: &[u8], target: &[u8], lcs: &[u8]) -> (usi
 
 #[cfg(test)]
 mod encoder_tests {
+    use std::{
+        fs::{File, OpenOptions},
+        io::Cursor,
+    };
+
     use crate::lcs::Lcs;
 
     use super::*;
@@ -133,8 +171,17 @@ mod encoder_tests {
 
     #[test]
     fn test_create_instruction_buffer() {
-        let source = vec![0, 2, 2];
-        let target = vec![0, 1, 1];
-        dbg!(create_instructions(&source, &target));
+        let source = b"source ";
+        let target = b"target ";
+        dbg!(create_instructions(source, target));
+    }
+
+    #[test]
+    fn test_delta_encode() -> io::Result<()> {
+        let source = Cursor::new(b"source data here");
+        let target = Cursor::new(b"target data here");
+        let mut patch = OpenOptions::new().read(true).write(true).create(true).open("test_files/patch.dpatch")?;
+        delta_encode(source, target, &mut patch)?;
+        Ok(())
     }
 }
