@@ -1,7 +1,4 @@
-use crate::{
-    lcs::Lcs, AVERAGE_INSTRUCTION_AMOUNT, INSTRUCTION_BYTE, NON_INSTRUCTION_BYTE_COUNT_PERCENT,
-    WANTED_CHUNK_SIZE,
-};
+use crate::{lcs::Lcs, CHUNK_SIZE, INSTRUCTION_BYTE, NON_INSTRUCTION_BYTE_COUNT_PERCENT};
 use std::{
     cmp::max,
     io::{self, Read, Write},
@@ -11,7 +8,9 @@ pub fn delta_encode<R: Read, W: Write>(source: R, target: R, patch: W) -> io::Re
     todo!();
 }
 
-pub(crate) fn create_instructions(source: &[u8], target: &[u8]) -> Vec<u8> {
+pub fn create_instructions(source: &[u8], target: &[u8]) -> Vec<u8> {
+    debug_assert!(source.len() <= CHUNK_SIZE as usize);
+    debug_assert!(target.len() <= CHUNK_SIZE as usize);
     let lcs = Lcs::new(source, target).subsequence();
     let mut bytes: Vec<u8> = Vec::with_capacity(max(source.len(), target.len()) + lcs.len());
     let mut source_index: usize = 0;
@@ -65,11 +64,11 @@ pub(crate) fn create_instructions(source: &[u8], target: &[u8]) -> Vec<u8> {
     bytes
 }
 
-pub(crate) fn add_instruction_length(target: &[u8], next_lcs_item: Option<u8>) -> usize {
+pub fn add_instruction_length(target: &[u8], next_lcs_item: Option<u8>) -> usize {
     remove_instruction_length(target, next_lcs_item)
 }
 
-pub(crate) fn remove_instruction_length(source: &[u8], next_lcs_item: Option<u8>) -> usize {
+pub fn remove_instruction_length(source: &[u8], next_lcs_item: Option<u8>) -> usize {
     if let Some(item) = next_lcs_item {
         source
             .iter()
@@ -80,7 +79,7 @@ pub(crate) fn remove_instruction_length(source: &[u8], next_lcs_item: Option<u8>
     }
 }
 
-pub(crate) fn copy_instruction_length(source: &[u8], target: &[u8], lcs: &[u8]) -> (usize, usize) {
+pub fn copy_instruction_length(source: &[u8], target: &[u8], lcs: &[u8]) -> (usize, usize) {
     let mut non_instruction_byte_values_count: usize = 0;
     let (mut item_index, mut lcs_index) = (0, 0);
     while item_index < source.len() && item_index < target.len() {

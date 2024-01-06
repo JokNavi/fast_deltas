@@ -7,15 +7,10 @@ pub mod lcs;
 /// If the that should have been INSTRUCTION_BYTE is not equal to INSTRUCTION_BYTE's value it is an add instruction.
 pub const INSTRUCTION_BYTE: u8 = 0;
 
-/// The size of the source and target chunk stored in memory, in bytes.
-/// Increasing this will increase the memory required for each chunk exponentially. (Due to the current Lcs implementation.)
-pub const WANTED_CHUNK_SIZE: u8 = 255;
-
-/// The average amount of induvidual instructions per chunk
-const AVERAGE_INSTRUCTION_AMOUNT: u8 = 5;
-
 ///The maximum percent of values in a copy instruction that **are not** equal to INSTRUCTION_BYTE's value.
 pub const NON_INSTRUCTION_BYTE_COUNT_PERCENT: usize = 50;
+
+pub const CHUNK_SIZE: usize = 255;
 
 #[cfg(test)]
 mod tests {

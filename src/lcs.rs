@@ -1,4 +1,4 @@
-pub const CHUNK_SIZE: usize = 255;
+use crate::CHUNK_SIZE;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Lcs<'a> {
