@@ -1,4 +1,4 @@
-use crate::encoder::CHUNK_SIZE;
+pub const CHUNK_SIZE: usize = 255;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Lcs<'a> {
@@ -88,7 +88,7 @@ mod lcs_tests {
                 .flatten()
                 .map(|num| *num as usize)
                 .sum::<usize>(),
-            4932095
+            5559680
         );
     }
 

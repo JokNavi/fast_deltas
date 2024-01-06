@@ -7,23 +7,17 @@ use std::{
     io::{self, Read, Write},
 };
 
-///The actual chunk size used. A few bytes are subtracted to make place for the instruction identifiers.
-pub const CHUNK_SIZE: u8 = WANTED_CHUNK_SIZE - (AVERAGE_INSTRUCTION_AMOUNT * 2);
-
-/// The capcity allocated for the instruction buffer.
-pub const BUFFER_SIZE: usize = WANTED_CHUNK_SIZE as usize;
-
 pub fn delta_encode<R: Read, W: Write>(source: R, target: R, patch: W) -> io::Result<()> {
     todo!();
 }
 
-pub fn create_instructions(source: &[u8], target: &[u8]) -> Vec<u8> {
-    let lcs = Lcs::new(&source, &target).subsequence();
-    let mut bytes: Vec<u8> = Vec::with_capacity(max(source.len(), target.len())+lcs.len());
+pub(crate) fn create_instructions(source: &[u8], target: &[u8]) -> Vec<u8> {
+    let lcs = Lcs::new(source, target).subsequence();
+    let mut bytes: Vec<u8> = Vec::with_capacity(max(source.len(), target.len()) + lcs.len());
     let mut source_index: usize = 0;
     let mut target_index: usize = 0;
     let mut lcs_index: usize = 0;
-    while lcs.len() > 0 && lcs_index < lcs.len() {
+    while !lcs.is_empty() && lcs_index < lcs.len() {
         if source[source_index] == target[target_index] {
             //copy
             bytes.push(INSTRUCTION_BYTE);
@@ -58,12 +52,12 @@ pub fn create_instructions(source: &[u8], target: &[u8]) -> Vec<u8> {
             target_index += target_count;
         }
     }
-    if source[source_index..].len() > 0 {
+    if !source[source_index..].is_empty() {
         //remove
         bytes.push(INSTRUCTION_BYTE);
         bytes.push(source[source_index..].len().try_into().unwrap());
     }
-    if target[target_index..].len() > 0 {
+    if !target[target_index..].is_empty() {
         //add
         bytes.push(target[target_index..].len().try_into().unwrap());
         bytes.extend(target[target_index..].iter());
@@ -71,14 +65,14 @@ pub fn create_instructions(source: &[u8], target: &[u8]) -> Vec<u8> {
     bytes
 }
 
-pub fn add_instruction_length<'a>(target: &[u8], next_lcs_item: Option<u8>) -> usize {
+pub(crate) fn add_instruction_length(target: &[u8], next_lcs_item: Option<u8>) -> usize {
     remove_instruction_length(target, next_lcs_item)
 }
 
-pub fn remove_instruction_length<'a>(source: &[u8], next_lcs_item: Option<u8>) -> usize {
+pub(crate) fn remove_instruction_length(source: &[u8], next_lcs_item: Option<u8>) -> usize {
     if let Some(item) = next_lcs_item {
         source
-            .into_iter()
+            .iter()
             .position(|&x| x == item)
             .unwrap_or(source.len())
     } else {
@@ -86,7 +80,7 @@ pub fn remove_instruction_length<'a>(source: &[u8], next_lcs_item: Option<u8>) -
     }
 }
 
-pub fn copy_instruction_length(source: &[u8], target: &[u8], lcs: &[u8]) -> (usize, usize) {
+pub(crate) fn copy_instruction_length(source: &[u8], target: &[u8], lcs: &[u8]) -> (usize, usize) {
     let mut non_instruction_byte_values_count: usize = 0;
     let (mut item_index, mut lcs_index) = (0, 0);
     while item_index < source.len() && item_index < target.len() {
