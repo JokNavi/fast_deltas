@@ -134,6 +134,8 @@ fn copy_instruction_length(source: &[u8], target: &[u8], lcs: &[u8]) -> (usize, 
 
 #[cfg(test)]
 mod encoder_tests {
+    use std::{fs::OpenOptions, io::Cursor};
+
     use super::*;
     use crate::lcs::Lcs;
 
@@ -157,11 +159,23 @@ mod encoder_tests {
     fn test_copy_instruction_length() {
         let source = [0, 0, 3, 1, 2, 4];
         let target = [0, 0, 1, 2, 3, 4];
-        // let source = [5, 5, 0, 0, 3, 1, 2, 4];
-        // let target = [6, 0, 0, 1, 2, 3, 4];
-        // Lcs = [0, 0, 1, 2, 4];
-        // Patch = [0, 2, 1, 6, 0, 0, 0, 2, 254, 0, 1, 1, 254, 0];
         let lcs = Lcs::new(&source, &target).subsequence();
         assert_eq!(copy_instruction_length(&source, &target, &lcs), (4, 4));
+    }
+
+    #[test]
+    fn test_create_instruction_buffer() {
+        let source = b"Source data here.";
+        let target = b"Target data here.";
+        dbg!(create_instructions(source, target));
+    }
+
+    #[test]
+    fn test_delta_encode() -> io::Result<()> {
+        let source = Cursor::new(b"Source data here.");
+        let target = Cursor::new(b"Target data here.");
+        let mut patch = OpenOptions::new().read(true).write(true).create(true).open("test_files/patch.dpatch")?;
+        delta_encode(source, target, &mut patch)?;
+        Ok(())
     }
 }

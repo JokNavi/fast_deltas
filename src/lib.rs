@@ -27,7 +27,7 @@ mod tests {
         let target = OpenOptions::new()
             .read(true)
             .open("test_files/target.txt")?;
-        let mut patch = OpenOptions::new()
+        let patch = OpenOptions::new()
             .read(true)
             .write(true)
             .create(true)
