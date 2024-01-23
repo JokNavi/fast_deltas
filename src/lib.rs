@@ -17,6 +17,8 @@ pub(crate) const NON_INSTRUCTION_BYTE_COUNT_PERCENT: f32 = 50.0;
 mod tests {
     use std::{fs::OpenOptions, io};
 
+    use crate::encoder::delta_encode;
+
     #[test]
     fn test_encoder() -> io::Result<()> {
         let source = OpenOptions::new()
@@ -30,6 +32,7 @@ mod tests {
             .write(true)
             .create(true)
             .open("test_files/patch.dpatch")?;
+        delta_encode(source, target, patch)?;
         Ok(())
     }
 }
