@@ -1,5 +1,5 @@
-pub mod iterators;
 pub mod lcs;
+pub mod encoder;
 
 /// The byte that (on average) occurs most when taking the difference between 2 slices.
 pub const MOST_COMMON_DIFF_BYTE: u8 = 0;

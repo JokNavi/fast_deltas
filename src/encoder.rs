@@ -38,7 +38,7 @@ pub fn delta_encode<R: Read, W: Write>(source: R, target: R, patch: W) -> io::Re
     Ok(())
 }
 
-pub fn create_instructions(source: &[u8], target: &[u8]) -> Vec<u8> {
+fn create_instructions(source: &[u8], target: &[u8]) -> Vec<u8> {
     debug_assert!(source.len() <= CHUNK_SIZE as usize);
     debug_assert!(target.len() <= CHUNK_SIZE as usize);
     let lcs = Lcs::new(source, target).subsequence();
