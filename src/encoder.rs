@@ -1,6 +1,6 @@
 use crate::{lcs::Lcs, CHUNK_SIZE, INSTRUCTION_BYTE, NON_INSTRUCTION_BYTE_COUNT_PERCENT};
 use std::{
-    cmp::max,
+    cmp::{max, min},
     io::{self, BufReader, BufWriter, Read, Write},
 };
 
@@ -44,9 +44,20 @@ pub fn create_instructions(source: &[u8], target: &[u8]) -> Vec<u8> {
     let mut source_index: usize = 0;
     let mut target_index: usize = 0;
     let mut lcs_index: usize = 0;
-    while lcs_index < lcs.len()
-    {
-        if source_index < source.len() && target_index < target.len() && source[source_index] == target[target_index] {
+    while lcs_index < lcs.len() {
+        debug_assert!(lcs_index <= source_index);
+        debug_assert!(lcs_index <= target_index);
+        if bytes.len() > 400 {
+            dbg!(
+                source_index,
+                target_index,
+                lcs_index,
+                &source,
+                &target,
+                &lcs
+            );
+        }
+        if source[source_index] == target[target_index] {
             //copy
             bytes.push(INSTRUCTION_BYTE);
             let (lcs_count, items_count) = copy_instruction_length(
@@ -64,14 +75,14 @@ pub fn create_instructions(source: &[u8], target: &[u8]) -> Vec<u8> {
             lcs_index += lcs_count;
             source_index += items_count;
             target_index += items_count;
-        } else if source_index < source.len() && source[source_index] != lcs[lcs_index] {
+        } else if source[source_index] != lcs[lcs_index] {
             //remove
             bytes.push(INSTRUCTION_BYTE);
             let source_count =
                 remove_instruction_length(&source[source_index..], Some(lcs[lcs_index]));
             bytes.push(source_count.try_into().unwrap());
             source_index += source_count;
-        } else if target_index < target.len() && target[target_index] != lcs[lcs_index] {
+        } else if target[target_index] != lcs[lcs_index] {
             //add
             let target_count =
                 add_instruction_length(&target[target_index..], Some(lcs[lcs_index]));
@@ -119,9 +130,11 @@ pub fn copy_instruction_length(source: &[u8], target: &[u8], lcs: &[u8]) -> (usi
             lcs_index += 1;
         } else {
             non_instruction_byte_values_count += 1;
-            // if source[item_index] == lcs[lcs_index] || target[item_index] == lcs[lcs_index] {
-            //     lcs_index += 1;
-            // }
+            if lcs_index < lcs.len()
+                && (source[item_index] == lcs[lcs_index] || target[item_index] == lcs[lcs_index])
+            {
+                lcs_index += 1;
+            }
         }
         if (non_instruction_byte_values_count as f32 / (item_index + 1) as f32) * 100.0
             > NON_INSTRUCTION_BYTE_COUNT_PERCENT as f32
@@ -130,7 +143,7 @@ pub fn copy_instruction_length(source: &[u8], target: &[u8], lcs: &[u8]) -> (usi
         }
         item_index += 1;
     }
-    (lcs_index, item_index)
+    (min(item_index, lcs_index), item_index)
 }
 
 #[cfg(test)]
@@ -159,16 +172,17 @@ mod encoder_tests {
 
     #[test]
     fn test_copy_instruction_length() {
-        let source = vec![0, 0, 2, 2];
-        let target = vec![0, 0, 1, 1];
+        let source = [0, 0, 2, 2, 2];
+        let target = [0, 0, 1, 1, 1];
         let lcs = Lcs::new(&source, &target).subsequence();
         assert_eq!(copy_instruction_length(&source, &target, &lcs), (2, 4));
     }
 
     #[test]
     fn test_create_instruction_buffer() {
-        let source = [0, 1, 1];
-        let target = [0, 2, 2];
+        let source = [117, 101, 32, 111, 114, 99, 105, 32, 110, 101, 116];
+        let target = [116, 117, 114, 105, 101, 110, 116, 32, 109];
+        //              LCS = [116];
         dbg!(create_instructions(&source, &target));
     }
 
@@ -184,8 +198,8 @@ mod encoder_tests {
 
     #[test]
     fn testing_copy_instruction_length() {
-        let source: [u8; 4] = [0, 4, 1, 2];
-        let target: [u8; 5] = [0, 3, 1, 5, 2];
+        let source = [117, 101, 32, 111, 114, 99, 105, 32, 110, 101, 116];
+        let target = [116, 117, 114, 105, 101, 110, 116, 32, 109];
         let lcs = Lcs::new(&source, &target).subsequence();
         dbg!(copy_instruction_length(&source, &target, &lcs));
     }

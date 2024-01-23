@@ -15,7 +15,7 @@ pub const CHUNK_SIZE: usize = 255;
 #[cfg(test)]
 mod tests {
     use std::{io, fs::OpenOptions};
-    use crate::{encoder::{delta_encode, copy_instruction_length}, lcs::Lcs};
+    use crate::encoder::delta_encode;
 
     #[test]
     fn test_encoder() -> io::Result<()> {
