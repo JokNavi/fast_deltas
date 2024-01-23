@@ -1,16 +1,11 @@
-use crate::{lcs::Lcs, INSTRUCTION_BYTE, NON_INSTRUCTION_BYTE_COUNT_PERCENT};
-use std::{
-    cmp::{max, min},
-    io::{self, BufReader, BufWriter, Read, Write},
-};
 
 const CHUNK_SIZE: usize = u8::MAX as usize;
 
-pub fn add_instruction_length(target: &[u8], next_lcs_item: Option<u8>) -> usize {
+fn add_instruction_length(target: &[u8], next_lcs_item: Option<u8>) -> usize {
     remove_instruction_length(target, next_lcs_item)
 }
 
-pub fn remove_instruction_length(source: &[u8], next_lcs_item: Option<u8>) -> usize {
+fn remove_instruction_length(source: &[u8], next_lcs_item: Option<u8>) -> usize {
     if let Some(item) = next_lcs_item {
         source
             .iter()
