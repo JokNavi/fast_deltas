@@ -14,15 +14,17 @@ pub const CHUNK_SIZE: usize = 255;
 
 #[cfg(test)]
 mod tests {
-    use crate::lcs::Lcs;
+    use std::{io, fs::OpenOptions};
+    use crate::{encoder::{delta_encode, copy_instruction_length}, lcs::Lcs};
 
     #[test]
-    fn testing() {
-        let source = vec![4, 3, 2, 0, 7, 5, 2, 9, 0, 1, 3, 1, 8, 2, 9];
-        let target = vec![0, 7, 4, 5, 2, 5, 1, 0, 1, 1, 1, 1, 6, 9, 1];
-        let lcs = Lcs::new(&source, &target).subsequence();
-        dbg!(&lcs);
-        dbg!(lcs.len());
-        dbg!(source.len(), target.len());
+    fn test_encoder() -> io::Result<()> {
+        let source = OpenOptions::new().read(true).open("test_files/source.txt")?;
+        let target = OpenOptions::new().read(true).open("test_files/target.txt")?;
+        let mut patch = OpenOptions::new().read(true).write(true).create(true).open("test_files/patch.dpatch")?;
+        delta_encode(source, target, &mut patch)?;
+        Ok(())
     }
+
+   
 }

@@ -44,13 +44,9 @@ pub fn create_instructions(source: &[u8], target: &[u8]) -> Vec<u8> {
     let mut source_index: usize = 0;
     let mut target_index: usize = 0;
     let mut lcs_index: usize = 0;
-    while !lcs.is_empty()
-        && lcs_index < lcs.len()
-        && source_index < source.len()
-        && target_index < target.len()
+    while lcs_index < lcs.len()
     {
-        if source[source_index] == target[target_index] {
-            //line 48
+        if source_index < source.len() && target_index < target.len() && source[source_index] == target[target_index] {
             //copy
             bytes.push(INSTRUCTION_BYTE);
             let (lcs_count, items_count) = copy_instruction_length(
@@ -68,14 +64,14 @@ pub fn create_instructions(source: &[u8], target: &[u8]) -> Vec<u8> {
             lcs_index += lcs_count;
             source_index += items_count;
             target_index += items_count;
-        } else if source[source_index] != lcs[lcs_index] {
+        } else if source_index < source.len() && source[source_index] != lcs[lcs_index] {
             //remove
             bytes.push(INSTRUCTION_BYTE);
             let source_count =
                 remove_instruction_length(&source[source_index..], Some(lcs[lcs_index]));
             bytes.push(source_count.try_into().unwrap());
             source_index += source_count;
-        } else if target[target_index] != lcs[lcs_index] {
+        } else if target_index < target.len() && target[target_index] != lcs[lcs_index] {
             //add
             let target_count =
                 add_instruction_length(&target[target_index..], Some(lcs[lcs_index]));
@@ -123,6 +119,9 @@ pub fn copy_instruction_length(source: &[u8], target: &[u8], lcs: &[u8]) -> (usi
             lcs_index += 1;
         } else {
             non_instruction_byte_values_count += 1;
+            // if source[item_index] == lcs[lcs_index] || target[item_index] == lcs[lcs_index] {
+            //     lcs_index += 1;
+            // }
         }
         if (non_instruction_byte_values_count as f32 / (item_index + 1) as f32) * 100.0
             > NON_INSTRUCTION_BYTE_COUNT_PERCENT as f32
@@ -136,10 +135,7 @@ pub fn copy_instruction_length(source: &[u8], target: &[u8], lcs: &[u8]) -> (usi
 
 #[cfg(test)]
 mod encoder_tests {
-    use std::{
-        fs::{File, OpenOptions},
-        io::Cursor,
-    };
+    use std::io::Cursor;
 
     use crate::lcs::Lcs;
 
@@ -171,17 +167,26 @@ mod encoder_tests {
 
     #[test]
     fn test_create_instruction_buffer() {
-        let source = b"source ";
-        let target = b"target ";
-        dbg!(create_instructions(source, target));
+        let source = [0, 1, 1];
+        let target = [0, 2, 2];
+        dbg!(create_instructions(&source, &target));
     }
 
     #[test]
     fn test_delta_encode() -> io::Result<()> {
-        let source = Cursor::new(b"source data here");
-        let target = Cursor::new(b"target data here");
-        let mut patch = OpenOptions::new().read(true).write(true).create(true).open("test_files/patch.dpatch")?;
+        let source = Cursor::new(b"urce ");
+        let target = Cursor::new(b"rget ");
+        let mut patch = Cursor::new(Vec::new());
         delta_encode(source, target, &mut patch)?;
+        dbg!(patch.into_inner());
         Ok(())
+    }
+
+    #[test]
+    fn testing_copy_instruction_length() {
+        let source: [u8; 4] = [0, 4, 1, 2];
+        let target: [u8; 5] = [0, 3, 1, 5, 2];
+        let lcs = Lcs::new(&source, &target).subsequence();
+        dbg!(copy_instruction_length(&source, &target, &lcs));
     }
 }
