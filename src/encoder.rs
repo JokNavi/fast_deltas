@@ -1,4 +1,7 @@
-use std::{cmp::max, io::{self, BufReader, BufWriter, Read, Write}};
+use std::{
+    cmp::max,
+    io::{self, BufReader, BufWriter, Read, Write},
+};
 
 use crate::{lcs::Lcs, INSTRUCTION_BYTE, NON_INSTRUCTION_BYTE_COUNT_PERCENT};
 const CHUNK_SIZE: usize = u8::MAX as usize;
@@ -174,7 +177,11 @@ mod encoder_tests {
     fn test_delta_encode() -> io::Result<()> {
         let source = Cursor::new(b"Source data here.");
         let target = Cursor::new(b"Target data here.");
-        let mut patch = OpenOptions::new().read(true).write(true).create(true).open("test_files/patch.dpatch")?;
+        let mut patch = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .open("test_files/patch.dpatch")?;
         delta_encode(source, target, &mut patch)?;
         Ok(())
     }
