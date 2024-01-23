@@ -1,26 +1,39 @@
-pub mod iterators;
 pub mod lcs;
+pub mod encoder;
+
+/// The byte that (on average) occurs most when taking the difference between 2 slices.
+pub const MOST_COMMON_DIFF_BYTE: u8 = 0;
 
 /// ### Special: Check next byte.
 /// If the next byte IS a 0 it is a copy instruction.
 /// If the next byte IS NOT a 0 it is a remove instruction.
 /// If the that should have been INSTRUCTION_BYTE is not equal to INSTRUCTION_BYTE's value it is an add instruction.
-pub const INSTRUCTION_BYTE: u8 = 0;
+pub(crate) const INSTRUCTION_BYTE: u8 = MOST_COMMON_DIFF_BYTE;
 
 ///The maximum percent of values in a copy instruction that **are not** equal to INSTRUCTION_BYTE's value.
-pub const NON_INSTRUCTION_BYTE_COUNT_PERCENT: usize = 50;
+pub(crate) const NON_INSTRUCTION_BYTE_COUNT_PERCENT: f32 = 50.0;
 
 #[cfg(test)]
 mod tests {
-    use crate::lcs::Lcs;
+    use std::{fs::OpenOptions, io};
+
+    use crate::encoder::delta_encode;
 
     #[test]
-    fn testing() {
-        let source = vec![4, 3, 2, 0, 7, 5, 2, 9, 0, 1, 3, 1, 8, 2, 9];
-        let target = vec![0, 7, 4, 5, 2, 5, 1, 0, 1, 1, 1, 1, 6, 9, 1];
-        let lcs = Lcs::new(&source, &target).subsequence();
-        dbg!(&lcs);
-        dbg!(lcs.len());
-        dbg!(source.len(), target.len());
+    fn test_encoder() -> io::Result<()> {
+        let source = OpenOptions::new()
+            .read(true)
+            .open("test_files/source.txt")?;
+        let target = OpenOptions::new()
+            .read(true)
+            .open("test_files/target.txt")?;
+        let patch = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .open("test_files/patch.dpatch")?;
+        delta_encode(source, target, patch)?;
+        Ok(())
     }
 }
+

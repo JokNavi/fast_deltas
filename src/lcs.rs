@@ -1,3 +1,5 @@
+const CHUNK_SIZE: usize = u8::MAX as usize;
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Lcs<'a> {
     source: &'a [u8],
@@ -86,7 +88,7 @@ mod lcs_tests {
                 .flatten()
                 .map(|num| *num as usize)
                 .sum::<usize>(),
-            4932095
+            5559680
         );
     }
 
