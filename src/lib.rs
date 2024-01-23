@@ -1,7 +1,7 @@
 pub mod encoder;
 pub mod lcs;
 
-/// The byte that (on average) occurs most when taking the difference between 2 slices. 
+/// The byte that (on average) occurs most when taking the difference between 2 slices.
 pub const MOST_COMMON_DIFF_BYTE: u8 = 0;
 
 /// ### Special: Check next byte.
@@ -11,19 +11,25 @@ pub const MOST_COMMON_DIFF_BYTE: u8 = 0;
 pub(crate) const INSTRUCTION_BYTE: u8 = MOST_COMMON_DIFF_BYTE;
 
 ///The maximum percent of values in a copy instruction that **are not** equal to INSTRUCTION_BYTE's value.
-pub(crate) const NON_INSTRUCTION_BYTE_COUNT_PERCENT: usize = 50;
+pub(crate) const NON_INSTRUCTION_BYTE_COUNT_PERCENT: f32 = 50.0;
 
 #[cfg(test)]
 mod tests {
-    use std::{io, fs::OpenOptions};
+    use std::{fs::OpenOptions, io};
 
     #[test]
     fn test_encoder() -> io::Result<()> {
-        let source = OpenOptions::new().read(true).open("test_files/source.txt")?;
-        let target = OpenOptions::new().read(true).open("test_files/target.txt")?;
-        let mut patch = OpenOptions::new().read(true).write(true).create(true).open("test_files/patch.dpatch")?;
+        let source = OpenOptions::new()
+            .read(true)
+            .open("test_files/source.txt")?;
+        let target = OpenOptions::new()
+            .read(true)
+            .open("test_files/target.txt")?;
+        let mut patch = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .open("test_files/patch.dpatch")?;
         Ok(())
     }
-
-   
 }
