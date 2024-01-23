@@ -1,4 +1,4 @@
-pub mod encoder;
+pub mod iterators;
 pub mod lcs;
 
 /// The byte that (on average) occurs most when taking the difference between 2 slices.
@@ -36,3 +36,4 @@ mod tests {
         Ok(())
     }
 }
+
