@@ -1,4 +1,4 @@
-use crate::CHUNK_SIZE;
+const CHUNK_SIZE: usize = u8::MAX as usize;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Lcs<'a> {

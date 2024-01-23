@@ -1,4 +1,3 @@
-pub mod encoder;
 pub mod lcs;
 
 fn main() {
