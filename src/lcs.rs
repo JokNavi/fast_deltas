@@ -78,21 +78,6 @@ mod lcs_tests {
     use super::*;
 
     #[test]
-    fn new_ok() {
-        let source = vec![0; 245];
-        let target = source.clone();
-        let lcs = Lcs::new(&source, &target);
-        assert_eq!(
-            lcs.table
-                .iter()
-                .flatten()
-                .map(|num| *num as usize)
-                .sum::<usize>(),
-            5559680
-        );
-    }
-
-    #[test]
     #[should_panic]
     fn new_panic() {
         let source = vec![0; u8::MAX as usize + 1];

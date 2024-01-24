@@ -118,12 +118,11 @@ fn copy_instruction_length(source: &[u8], target: &[u8], lcs: &[u8]) -> (usize, 
     let mut non_instruction_byte_values_count: usize = 0;
     let (mut item_index, mut lcs_index) = (0, 0);
     while item_index < source.len() && item_index < target.len() && lcs_index < lcs.len() {
-        let diff_byte = target[item_index].wrapping_sub(source[item_index]);
-        if !(diff_byte == INSTRUCTION_BYTE || diff_byte == u8::MAX - INSTRUCTION_BYTE) {
-            non_instruction_byte_values_count += 1;
-        }
         if source[item_index] == lcs[lcs_index] || target[item_index] == lcs[lcs_index] {
             lcs_index += 1;
+        }
+        if source[item_index] != target[item_index] {
+            non_instruction_byte_values_count += 1;
         }
         if (non_instruction_byte_values_count as f32 / (item_index + 1) as f32) * 100.0
             > NON_INSTRUCTION_BYTE_COUNT_PERCENT
