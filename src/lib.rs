@@ -2,7 +2,7 @@ pub mod lcs;
 pub mod encoder;
 
 /// The byte that (on average) occurs most when taking the difference between 2 slices.
-pub const MOST_COMMON_DIFF_BYTE: u8 = 1;
+pub(crate) const MOST_COMMON_DIFF_BYTE: u8 = 0;
 
 /// ### Special: Check next byte.
 /// If the next byte IS a 0 it is a copy instruction.
