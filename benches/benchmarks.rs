@@ -1,5 +1,5 @@
 pub mod lcs;
-use std::{fs::OpenOptions, io};
+use std::fs::OpenOptions;
 
 use divan::{Bencher, black_box};
 use fast_deltas::encoder::delta_encode;
