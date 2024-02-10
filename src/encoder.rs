@@ -52,7 +52,6 @@ fn create_instructions(source: &[u8], target: &[u8]) -> Vec<u8> {
         && target_index < target.len()
     {
         if source[source_index] == target[target_index] {
-            //line 48
             //copy
             bytes.push(INSTRUCTION_BYTE);
             let (lcs_count, items_count) = copy_instruction_length(
