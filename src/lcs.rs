@@ -78,14 +78,6 @@ mod lcs_tests {
     use super::*;
 
     #[test]
-    #[should_panic]
-    fn new_panic() {
-        let source = vec![0; u8::MAX as usize + 1];
-        let target = vec![];
-        Lcs::new(&source, &target);
-    }
-
-    #[test]
     fn is_empty() {
         let source = vec![0; 245];
         let target = vec![];

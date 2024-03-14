@@ -13,6 +13,8 @@ pub(crate) const INSTRUCTION_BYTE: u8 = MOST_COMMON_DIFF_BYTE;
 ///The maximum percent of values in a copy instruction that **are not** equal to INSTRUCTION_BYTE's value.
 pub(crate) const NON_INSTRUCTION_BYTE_COUNT_PERCENT: f32 = 50.0;
 
+pub(crate) const MIN_MATCHING_PREFIX_LENGTH: usize = 8;
+
 #[cfg(test)]
 mod tests {
     use std::{fs::OpenOptions, io};
@@ -20,18 +22,35 @@ mod tests {
     use crate::encoder::delta_encode;
 
     #[test]
-    fn test_encoder() -> io::Result<()> {
+    fn test_encoder_exe() -> io::Result<()> {
         let source = OpenOptions::new()
             .read(true)
-            .open("test_files/source.txt")?;
+            .open("test_files/exe/char_art_old.exe")?;
         let target = OpenOptions::new()
             .read(true)
-            .open("test_files/target.txt")?;
+            .open("test_files/exe/char_art_new.exe")?;
         let patch = OpenOptions::new()
             .read(true)
             .write(true)
             .create(true)
-            .open("test_files/patch.dpatch")?;
+            .open("test_files/exe/patch.dpatch")?;
+        delta_encode(source, target, patch)?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_encoder_text() -> io::Result<()> {
+        let source = OpenOptions::new()
+            .read(true)
+            .open("test_files/text/source.txt")?;
+        let target = OpenOptions::new()
+            .read(true)
+            .open("test_files/text/target.txt")?;
+        let patch = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .open("test_files/text/patch.dpatch")?;
         delta_encode(source, target, patch)?;
         Ok(())
     }
