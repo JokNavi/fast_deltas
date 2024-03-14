@@ -13,8 +13,6 @@ pub(crate) const INSTRUCTION_BYTE: u8 = MOST_COMMON_DIFF_BYTE;
 ///The maximum percent of values in a copy instruction that **are not** equal to INSTRUCTION_BYTE's value.
 pub(crate) const NON_INSTRUCTION_BYTE_COUNT_PERCENT: f32 = 50.0;
 
-pub(crate) const MIN_MATCHING_PREFIX_LENGTH: usize = 8;
-
 #[cfg(test)]
 mod tests {
     use std::{fs::OpenOptions, io};

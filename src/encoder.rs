@@ -165,7 +165,7 @@ mod encoder_tests {
     }
 
     #[test]
-    fn test_create_instruction_buffer() {
+    fn test_create_instructions() {
         let source = b"Source data here.";
         let target = b"Target data here.";
         dbg!(create_instructions(source, target));
@@ -175,11 +175,7 @@ mod encoder_tests {
     fn test_delta_encode() -> io::Result<()> {
         let source = Cursor::new(b"Source data here.");
         let target = Cursor::new(b"Target data here.");
-        let mut patch = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .create(true)
-            .open("test_files/patch.dpatch")?;
+        let mut patch = Cursor::new(Vec::new());
         delta_encode(source, target, &mut patch)?;
         Ok(())
     }
