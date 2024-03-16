@@ -15,12 +15,16 @@ pub(crate) const NON_INSTRUCTION_BYTE_COUNT_PERCENT: f32 = 50.0;
 
 #[cfg(test)]
 mod tests {
-    use std::{fs::OpenOptions, io};
+    use std::{fs::OpenOptions, io::{self, Read}};
+    
 
-    use crate::encoder::delta_encode;
+    use crate::encoder::{self, delta_encode};
 
     #[test]
+    #[cfg(feature="exe")]
     fn test_encoder_exe() -> io::Result<()> {
+        use std::process::Command;
+
         let source = OpenOptions::new()
             .read(true)
             .open("test_files/exe/char_art_old.exe")?;
@@ -33,10 +37,12 @@ mod tests {
             .create(true)
             .open("test_files/exe/patch.dpatch")?;
         delta_encode(source, target, patch)?;
+        Command::new("gzip").arg("test_files/exe/patch.dpatch").output()?;
         Ok(())
     }
-
+    
     #[test]
+    #[cfg(feature="txt")]
     fn test_encoder_text() -> io::Result<()> {
         let source = OpenOptions::new()
             .read(true)

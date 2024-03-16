@@ -112,7 +112,6 @@ fn remove_instruction_length(source: &[u8], next_lcs_item: Option<u8>) -> usize 
         source.len()
     }
 }
-
 fn copy_instruction_length(source: &[u8], target: &[u8], lcs: &[u8]) -> (usize, usize) {
     let mut non_instruction_byte_values_count: usize = 0;
     let (mut item_index, mut lcs_index) = (0, 0);
@@ -135,7 +134,7 @@ fn copy_instruction_length(source: &[u8], target: &[u8], lcs: &[u8]) -> (usize, 
 
 #[cfg(test)]
 mod encoder_tests {
-    use std::{fs::OpenOptions, io::Cursor};
+    use std::io::Cursor;
 
     use super::*;
     use crate::lcs::Lcs;
@@ -162,13 +161,6 @@ mod encoder_tests {
         let target = [0, 0, 1, 2, 3, 4];
         let lcs = Lcs::new(&source, &target).subsequence();
         assert_eq!(copy_instruction_length(&source, &target, &lcs), (4, 4));
-    }
-
-    #[test]
-    fn test_create_instructions() {
-        let source = b"Source data here.";
-        let target = b"Target data here.";
-        dbg!(create_instructions(source, target));
     }
 
     #[test]
