@@ -3,7 +3,11 @@ use std::{
     io::{self, BufReader, BufWriter, Read, Write},
 };
 
-use crate::{lcs::Lcs, INSTRUCTION_BYTE, NON_INSTRUCTION_BYTE_COUNT_PERCENT};
+use crate::{lcs::Lcs, INSTRUCTION_BYTE};
+
+#[cfg(feature = "half_match")]
+use crate::NON_INSTRUCTION_BYTE_COUNT_PERCENT;
+
 const CHUNK_SIZE: usize = u8::MAX as usize;
 
 pub fn delta_encode<R: Read, W: Write>(source: R, target: R, patch: W) -> io::Result<()> {
@@ -38,6 +42,7 @@ pub fn delta_encode<R: Read, W: Write>(source: R, target: R, patch: W) -> io::Re
     Ok(())
 }
 
+#[inline]
 fn create_instructions(source: &[u8], target: &[u8]) -> Vec<u8> {
     debug_assert!(source.len() <= CHUNK_SIZE as usize);
     debug_assert!(target.len() <= CHUNK_SIZE as usize);
@@ -116,6 +121,7 @@ fn remove_instruction_length(source: &[u8], next_lcs_item: Option<u8>) -> usize 
 }
 
 #[inline]
+#[cfg(feature = "half_match")]
 fn copy_instruction_length(source: &[u8], target: &[u8], lcs: &[u8]) -> (usize, usize) {
     let mut non_instruction_byte_values_count: usize = 0;
     let (mut item_index, mut lcs_index) = (0, 0);
@@ -134,6 +140,17 @@ fn copy_instruction_length(source: &[u8], target: &[u8], lcs: &[u8]) -> (usize, 
         item_index += 1;
     }
     (item_index, lcs_index)
+}
+
+#[inline]
+#[cfg(not(feature = "half_match"))]
+fn copy_instruction_length(source: &[u8], target: &[u8], lcs: &[u8]) -> (usize, usize) {
+    let index = source
+        .iter()
+        .zip(target.iter()).zip(lcs)
+        .position(|((source_byte, target_byte), lcs_byte)| source_byte != lcs_byte || target_byte != lcs_byte)
+        .unwrap_or(lcs.len());
+    (index, index)
 }
 
 #[cfg(test)]
@@ -160,11 +177,21 @@ mod encoder_tests {
     }
 
     #[test]
+    #[cfg(feature = "half_match")]
     fn test_copy_instruction_length() {
         let source = [0, 0, 3, 1, 2, 4];
         let target = [0, 0, 1, 2, 3, 4];
         let lcs = Lcs::new(&source, &target).subsequence();
         assert_eq!(copy_instruction_length(&source, &target, &lcs), (4, 4));
+    }
+
+    #[test]
+    #[cfg(not(feature = "half_match"))]
+    fn test_copy_instruction_length() {
+        let source = [0, 0, 3, 1, 2, 4];
+        let target = [0, 0, 1, 2, 3, 4];
+        let lcs = Lcs::new(&source, &target).subsequence();
+        assert_eq!(copy_instruction_length(&source, &target, &lcs), (2, 2));
     }
 
     #[test]

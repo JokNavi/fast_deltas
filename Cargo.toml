@@ -1,3 +1,4 @@
+workspace = { members = ["fast_deltas_cli"] }
 [package]
 name = "fast_deltas"
 version = "0.1.0"
@@ -12,10 +13,7 @@ divan = "0.1.8"
 name = "benchmarks"
 harness = false
 
-[dependencies]
-
 [features]
-exe = []
-txt = []
+half_match = []
 
 

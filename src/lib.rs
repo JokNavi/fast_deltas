@@ -10,5 +10,6 @@ pub(crate) const MOST_COMMON_DIFF_BYTE: u8 = 0;
 /// If the that should have been INSTRUCTION_BYTE is not equal to INSTRUCTION_BYTE's value it is an add instruction.
 pub(crate) const INSTRUCTION_BYTE: u8 = MOST_COMMON_DIFF_BYTE;
 
+#[cfg(feature = "half_match")]
 ///The maximum percent of values in a copy instruction that **are not** equal to INSTRUCTION_BYTE's value.
-pub(crate) const NON_INSTRUCTION_BYTE_COUNT_PERCENT: f32 = 0.0;
+pub(crate) const NON_INSTRUCTION_BYTE_COUNT_PERCENT: f32 = 50.0;
