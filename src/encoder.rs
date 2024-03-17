@@ -98,10 +98,12 @@ fn create_instructions(source: &[u8], target: &[u8]) -> Vec<u8> {
     bytes
 }
 
+#[inline]
 fn add_instruction_length(target: &[u8], next_lcs_item: Option<u8>) -> usize {
     remove_instruction_length(target, next_lcs_item)
 }
 
+#[inline]
 fn remove_instruction_length(source: &[u8], next_lcs_item: Option<u8>) -> usize {
     if let Some(item) = next_lcs_item {
         source
@@ -112,6 +114,8 @@ fn remove_instruction_length(source: &[u8], next_lcs_item: Option<u8>) -> usize 
         source.len()
     }
 }
+
+#[inline]
 fn copy_instruction_length(source: &[u8], target: &[u8], lcs: &[u8]) -> (usize, usize) {
     let mut non_instruction_byte_values_count: usize = 0;
     let (mut item_index, mut lcs_index) = (0, 0);

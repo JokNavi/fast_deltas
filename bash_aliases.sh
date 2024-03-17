@@ -1,2 +1,9 @@
-alias gzip-txt="rm test_files/text/patch.dpatch.gz && gzip -k test_files/text/patch.dpatch"
-alias gzip-exe="rm test_files/exe/patch.dpatch.gz && gzip -k test_files/exe/patch.dpatch"
+#!/bin/bash
+
+pgzip() {
+[[ -f "$1.gz" ]] && rm "$1.gz"
+[[ -f $1 ]] && gzip -k $1
+}
+
+alias gzip-txt="pgzip \"test_files/txt/patch.dpatch\""
+alias gzip-exe="pgzip \"test_files/exe/patch.dpatch\""
