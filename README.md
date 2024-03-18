@@ -15,3 +15,21 @@ A faster deltas library with a buffered read and write + smaller patches
     //vec![0, 3, 0, 0, 0, 0, 1, 1, 1, 5, 3, 3, 3, 3, 3];
     let patch = vec![INSTRUC_BYTE, 3, INSTRUC_BYTE, 0, 0, 0, 1, 1, 1, add_instruction_len, 3, 3, 3, 3, 3];
 ```
+
+## VRleCompress
+Compress repeating bytes with Variable Run Length Encoding
+
+```
+0 (Bit) mode: repeating character count <= 7;
+1 (Byte) mode: repeating character count > 8;
+```
+
+```
+Repeating bytes are encoded in this format: 
+{value}{mode identifier}{repeating length - 1}
+```
+
+```rust
+let uncompressed_bytes = vec![0, 0, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 4];
+let data_patch_bytes = vec![0, 0, 3, 0, 0, 4, 0, 0, 4];
+```

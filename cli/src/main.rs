@@ -54,17 +54,11 @@ fn write_delta(source_path: &Path, target_path: &Path, patch_path: &Path) -> io:
     Ok(())
 }
 
-fn xz_compress(
-    reader_path: &Path,
-    writer_path: &Path,
-    level: u8,
-) -> io::Result<()> {
+fn xz_compress(reader_path: &Path, writer_path: &Path, level: u8) -> io::Result<()> {
     use std::io::BufReader;
     use xz::write::XzEncoder;
     const CHUNK_SIZE: usize = 1024;
-    let reader_file = OpenOptions::new()
-        .read(true)
-        .open(reader_path)?;
+    let reader_file = OpenOptions::new().read(true).open(reader_path)?;
     let writer_file = OpenOptions::new()
         .create(true)
         .write(true)
