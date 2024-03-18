@@ -1,6 +1,6 @@
 use std::io::{self, Read, Write};
 
-fn vrle_encode<R: Read, W: Write>(mut reader: R, mut writer: W) -> io::Result<()> {
+pub fn vrle_encode<R: Read, W: Write>(mut reader: R, mut writer: W) -> io::Result<()> {
     let mut buffer = [0; 1024];
     let mut bytes_read = reader.read(&mut buffer)?;
     let mut zero_count: u8 = 0;
