@@ -12,8 +12,8 @@ impl<'a> Lcs<'a> {
     pub fn new(source: &'a [u8], target: &'a [u8]) -> Self {
         let source_length = source.len();
         let target_length = target.len();
-        debug_assert!(source_length <= u8::MAX as usize);
-        debug_assert!(target_length <= u8::MAX as usize);
+        debug_assert!(source_length <= CHUNK_SIZE);
+        debug_assert!(target_length <= CHUNK_SIZE);
         let mut table: Vec<Vec<u8>> = vec![vec![0; target_length + 1]; source_length + 1];
 
         for x in 0..=source_length {
